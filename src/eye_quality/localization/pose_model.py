@@ -35,7 +35,8 @@ def resolve_weights_path(weights: str | Path | None = None) -> str:
         return str(DEFAULT_FINETUNED_WEIGHTS)
     logger.warning(
         "Fine-tuned weights not found at %s; falling back to yolo11n-pose.pt. "
-        "Run training/convert_cub200.py and training/train_pose.py first.",
+        "Download eye_pose_v0.pt from https://huggingface.co/synthet/eye-pose-v0/tree/main "
+        "or run training/convert_cub200.py and training/train_pose.py first.",
         DEFAULT_FINETUNED_WEIGHTS,
     )
     return "yolo11n-pose.pt"

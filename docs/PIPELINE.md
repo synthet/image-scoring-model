@@ -14,7 +14,7 @@ image load (EXIF-oriented)
 
 ### 1. Localization
 
-`PoseLocalizer` runs Ultralytics YOLO11n-pose with fine-tuned bird weights (`models/eye_pose_v0.pt` when present).
+`PoseLocalizer` runs Ultralytics YOLO11n-pose with fine-tuned bird weights (`models/eye_pose_v0.pt` when present). Download from [synthet/eye-pose-v0 on Hugging Face](https://huggingface.co/synthet/eye-pose-v0/tree/main).
 
 **Keypoint schema** (6 points, index order matters for training labels):
 

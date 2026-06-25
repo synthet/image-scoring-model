@@ -10,13 +10,22 @@ pip install -e ".[dev]"
 
 GPU training requires CUDA-enabled PyTorch. See [docs/TRAINING.md](docs/TRAINING.md).
 
+## Pretrained weights
+
+Fine-tuned bird pose weights are hosted on Hugging Face: **[synthet/eye-pose-v0](https://huggingface.co/synthet/eye-pose-v0/tree/main)**
+
+```bash
+pip install huggingface_hub
+huggingface-cli download synthet/eye-pose-v0 eye_pose_v0.pt --local-dir models/
+```
+
+When `models/eye_pose_v0.pt` exists, the CLI uses it automatically.
+
 ## Quick start
 
 ```bash
 python -m eye_quality score path/to/bird.jpg --debug-dir /tmp/eye-debug
 ```
-
-When `models/eye_pose_v0.pt` exists, it is used automatically.
 
 ## Documentation
 

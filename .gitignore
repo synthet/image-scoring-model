@@ -1,4 +1,6 @@
-models/
+.env
+models/*
+!models/README.md
 data/
 debug_crops/
 runs/

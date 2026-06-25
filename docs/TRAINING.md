@@ -12,6 +12,17 @@ Fine-tune a YOLO11n-pose model on CUB-200-2011 bird part annotations mapped to o
   python -c "import torch; print(torch.cuda.is_available())"
   ```
 
+## Download pretrained weights
+
+Skip training by downloading the published checkpoint from Hugging Face: **[synthet/eye-pose-v0](https://huggingface.co/synthet/eye-pose-v0/tree/main)**
+
+```bash
+pip install huggingface_hub
+huggingface-cli download synthet/eye-pose-v0 eye_pose_v0.pt --local-dir models/
+```
+
+See also [models/README.md](../models/README.md). To reproduce or improve weights, follow the CUB-200 bootstrap below.
+
 ## CUB-200 bootstrap
 
 ### 1. Download dataset
@@ -60,7 +71,7 @@ python training/train_pose.py --epochs 3 --batch 8 --device 0
 python training/train_pose.py --epochs 100 --batch 16 --device 0 --output models/eye_pose_v0.pt
 ```
 
-Training artifacts are written under `runs/pose/`. Weights are not committed to git.
+Training artifacts are written under `runs/pose/`. Weights are not committed to git; the release checkpoint is on [Hugging Face](https://huggingface.co/synthet/eye-pose-v0/tree/main).
 
 ### 4. Resume interrupted training
 
@@ -117,5 +128,5 @@ The leading `<class> <cx> <cy> <w> <h>` fields are the **bird bounding box**. Th
 |-------|-----|
 | `Invalid CUDA device` | Install CUDA PyTorch (see Prerequisites) |
 | All images skipped in conversion | Ensure CUB `parts/parts.txt` lists `left eye` / `right eye` (not a single `eye` part) |
-| Generic COCO keypoints at inference | Confirm `models/eye_pose_v0.pt` exists; check CLI logs for weights path |
+| Generic COCO keypoints at inference | Download [eye-pose-v0](https://huggingface.co/synthet/eye-pose-v0/tree/main) to `models/eye_pose_v0.pt`; check CLI logs for weights path |
 | OpenCV errors on Windows | Heuristic scoring falls back to NumPy; localization is unaffected |

@@ -19,6 +19,14 @@ pip install -e ".[dev]"
 python -m eye_quality score path/to/bird.jpg --debug-dir /tmp/eye-debug
 ```
 
+## Pretrained weights
+
+Download fine-tuned pose weights from Hugging Face: **[synthet/eye-pose-v0](https://huggingface.co/synthet/eye-pose-v0/tree/main)**
+
+```bash
+huggingface-cli download synthet/eye-pose-v0 eye_pose_v0.pt --local-dir models/
+```
+
 When `models/eye_pose_v0.pt` exists, the CLI uses it automatically. Otherwise it falls back to generic `yolo11n-pose.pt` (not suitable for wildlife).
 
 ## Repository layout
@@ -27,7 +35,7 @@ When `models/eye_pose_v0.pt` exists, the CLI uses it automatically. Otherwise it
 src/eye_quality/       # Scoring package (localization, crop, heuristics, CLI)
 training/              # Dataset conversion and YOLO fine-tune scripts
 data/wildlife_bird/    # YOLO pose dataset (gitignored, produced from CUB-200)
-models/                # Fine-tuned weights (gitignored)
+models/                # Fine-tuned weights (gitignored; see models/README.md)
 runs/                  # Ultralytics training logs (gitignored)
 tests/                 # Unit and optional GPU inference tests
 ```

@@ -7,7 +7,7 @@ Related docs: [PIPELINE.md](PIPELINE.md), [API_CONTRACT.md](API_CONTRACT.md), [T
 ## Prerequisites
 
 - Install this package in the backend environment: `pip install -e /path/to/image-scoring-model`
-- Fine-tuned pose weights at `models/eye_pose_v0.pt` (see [TRAINING.md](TRAINING.md))
+- Fine-tuned pose weights at `models/eye_pose_v0.pt` — download [synthet/eye-pose-v0](https://huggingface.co/synthet/eye-pose-v0/tree/main) or see [TRAINING.md](TRAINING.md)
 - Wildlife keyword gating (`wildlife`, `birds`, `animals`) similar to [bird_species](https://github.com/synthet/image-scoring-backend/blob/main/modules/bird_species.py)
 
 ## Backend checklist
