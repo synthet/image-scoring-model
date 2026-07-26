@@ -68,6 +68,8 @@ Before the first iteration, state all of these in the thread (or a scratch file 
   lower is better. Record the baseline before the first change.
 - **Run command** — how one iteration trains and evaluates, and how its output is parsed. See
   [`docs/guides/TRAINING.md`](../../../docs/guides/TRAINING.md).
+- **Log path** — where stdout/stderr go for a detached run. An unattended process that dies with
+  output discarded leaves no evidence; redirect to a file (e.g. `runs/<task>_train.log`).
 - **Keep-or-revert rule** — improvement is retained as a commit; regression or crash is reverted to
   the last retained commit.
 - **Crash policy** — fix if mechanical (OOM → lower batch size), else revert and record.
@@ -75,6 +77,20 @@ Before the first iteration, state all of these in the thread (or a scratch file 
   This log is the actual output of the run; the weights are a by-product.
 - **Escalation** — the conditions that require a human (see below).
 - **Exhaustion** — what "no more ideas worth trying" looks like, so the run stops instead of churning.
+
+### Protect what the run will overwrite
+
+A promotion step that writes `models/<name>.pt` must first copy the current file to
+`models/<name>.backup.pt` and record that backup's baseline metric on the fixed val split, so
+keep-or-revert has a number to beat:
+
+```python
+YOLO("models/bird_detect_v0.backup.pt").val(
+    data="training/configs/wildlife_bird_det.yaml", split="val"
+)
+```
+
+Promote only if the finished `best.pt` beats that baseline; otherwise restore the backup.
 
 ## Step 3 — Declare a budget
 
@@ -88,6 +104,7 @@ No unattended run starts without explicit limits. State the ones that apply:
 | Disk for checkpoints | cap it; checkpoints fill a drive quickly |
 | GPU memory ceiling | a config that only fits by luck is not an improvement |
 | Minimum evidence to retain a change | one eval run on the fixed split, recorded |
+| Liveness check | confirm via `results.csv` growth or the process list — not the state file alone |
 
 When a budget is exhausted, **return the best retained checkpoint, the experiment log, the unresolved
 issues, and the reason for stopping.** Do not report a sweep's best number without saying how many

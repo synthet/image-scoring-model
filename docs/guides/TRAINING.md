@@ -114,7 +114,13 @@ python -m training.train_ctl start --task detect --epochs 100 --batch 16 --devic
 
 Pose training uses `--task pose` and writes checkpoints under `runs/pose/wildlife_bird/`.
 
-State is recorded in `runs/.train_state.json`. On Windows, set `EYE_QUALITY_PYTHON` if your CUDA-enabled interpreter is not the default Store Python.
+State is recorded in `runs/.train_state.json`. On Windows, set `EYE_QUALITY_PYTHON` if your CUDA-enabled interpreter is not the default Store Python. Background runs append to `runs/<task>_train.log`.
+
+**Resume is locked to the checkpoint's epoch count.** Ultralytics restores training args from `last.pt`, so `--epochs` on resume is ignored. A different budget needs a fresh run (new `--base`, or a different run `name`).
+
+**`exist_ok=True` reuses `runs/<task>/wildlife_bird/` and overwrites `results.csv`.** Archive or rename that CSV before a restart whose metrics you need to compare.
+
+**Always launch from the repo root.** Dataset YAMLs use relative paths such as `path: data/wildlife_bird_det`. Ultralytics resolves those against the working directory; otherwise it falls through to `DATASETS_DIR` (`datasets/`). `train_ctl` already passes `cwd=REPO_ROOT`.
 
 Manual resume (without `train_ctl`) still works:
 
@@ -210,3 +216,5 @@ The leading `<class> <cx> <cy> <w> <h>` fields are the **bird bounding box**. Th
 | All images skipped in conversion | Ensure CUB `parts/parts.txt` lists `left eye` / `right eye` (not a single `eye` part) |
 | Generic COCO keypoints at inference | Download [eye-pose-v0](https://huggingface.co/synthet/eye-pose-v0/tree/main) to `models/eye_pose_v0.pt`; check CLI logs for weights path |
 | OpenCV errors on Windows | Heuristic scoring falls back to NumPy; localization is unaffected |
+| Background run vanished with no output | Check `runs/<task>_train.log`; confirm liveness via the process list and a `results.csv` tail — not the state file alone |
+| `train_ctl status` raises `SystemError` / WinError 87 | Fixed in `_pid_alive` (Windows uses `tasklist`). On an old checkout, query the process list directly |

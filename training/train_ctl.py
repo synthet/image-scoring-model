@@ -63,6 +63,18 @@ def _save_state(state: dict[str, Any]) -> None:
 def _pid_alive(pid: int) -> bool:
     if pid <= 0:
         return False
+    if sys.platform == "win32":
+        # os.kill(pid, 0) can raise SystemError / WinError 87 on some Windows builds.
+        proc = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        out = (proc.stdout or "").strip()
+        if not out or out.startswith("INFO:"):
+            return False
+        return str(pid) in out
     try:
         os.kill(pid, 0)
     except OSError:
@@ -70,12 +82,46 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
+def _train_log_path(task: str) -> Path:
+    return REPO_ROOT / "runs" / f"{task}_train.log"
+
+
+def _spawn_training(cmd: list[str], *, task: str, background: bool) -> tuple[int, Path | None]:
+    """Start the training process. Background runs append stdout/stderr to runs/<task>_train.log."""
+    if not background:
+        proc = subprocess.Popen(cmd, cwd=REPO_ROOT)
+        proc.wait()
+        if proc.returncode != 0:
+            raise SystemExit(proc.returncode)
+        return proc.pid, None
+
+    log_path = _train_log_path(task)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    handle = log_path.open("a", encoding="utf-8")
+    handle.write(f"\n--- start {_utc_now()} ---\n")
+    handle.flush()
+    proc = subprocess.Popen(
+        cmd,
+        cwd=REPO_ROOT,
+        stdout=handle,
+        stderr=subprocess.STDOUT,
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
+    )
+    # Leave handle open for the child; GC would close it early if we closed here.
+    return proc.pid, log_path
+
+
 def _find_pids(script_name: str) -> list[int]:
     """Find training PIDs by script filename (e.g. train_detect.py)."""
     if sys.platform == "win32":
+        # Restrict to python*.exe so the PowerShell finder does not match itself
+        # (its -Command string contains the script name).
         ps = (
             "Get-CimInstance Win32_Process | "
-            f"Where-Object {{ $_.CommandLine -like '*{script_name}*' }} | "
+            "Where-Object { "
+            "$_.Name -match '^python' -and "
+            f"$_.CommandLine -like '*{script_name}*' "
+            "} | "
             "ForEach-Object { $_.ProcessId }"
         )
         proc = subprocess.run(
@@ -210,6 +256,13 @@ def cmd_status(args: argparse.Namespace) -> None:
             print(f"command: {' '.join(state['command'])}")
     print(f"save_dir: {progress['save_dir']}")
     print(f"checkpoint: {progress['checkpoint']} ({'present' if progress['checkpoint_exists'] else 'missing'})")
+    log_path = state.get("log") if state.get("task") == task else None
+    if not log_path:
+        candidate = _train_log_path(task)
+        if candidate.is_file():
+            log_path = str(candidate)
+    if log_path:
+        print(f"log: {log_path}")
     if "completed_epochs" in progress:
         print(f"completed_epochs: {progress['completed_epochs']}")
     else:
@@ -277,21 +330,7 @@ def cmd_resume(args: argparse.Namespace) -> None:
         output=output,
     )
 
-    if args.background:
-        proc = subprocess.Popen(
-            cmd,
-            cwd=REPO_ROOT,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
-        )
-        pid = proc.pid
-    else:
-        proc = subprocess.Popen(cmd, cwd=REPO_ROOT)
-        pid = proc.pid
-        proc.wait()
-        if proc.returncode != 0:
-            raise SystemExit(proc.returncode)
+    pid, log_path = _spawn_training(cmd, task=task, background=bool(args.background))
 
     state.update(
         {
@@ -308,11 +347,14 @@ def cmd_resume(args: argparse.Namespace) -> None:
             "output": output,
             "python": python_exe,
             "resume_checkpoint": str(_checkpoint(task)),
+            "log": str(log_path) if log_path else state.get("log"),
         }
     )
     _save_state(state)
     print(f"Resumed {task} training (pid {pid}).")
     print(f"Command: {' '.join(cmd)}")
+    if log_path:
+        print(f"Log: {log_path}")
 
 
 def cmd_start(args: argparse.Namespace) -> None:
@@ -339,21 +381,7 @@ def cmd_start(args: argparse.Namespace) -> None:
         base=args.base,
     )
 
-    if args.background:
-        proc = subprocess.Popen(
-            cmd,
-            cwd=REPO_ROOT,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
-        )
-        pid = proc.pid
-    else:
-        proc = subprocess.Popen(cmd, cwd=REPO_ROOT)
-        pid = proc.pid
-        proc.wait()
-        if proc.returncode != 0:
-            raise SystemExit(proc.returncode)
+    pid, log_path = _spawn_training(cmd, task=task, background=bool(args.background))
 
     state = {
         "task": task,
@@ -369,11 +397,14 @@ def cmd_start(args: argparse.Namespace) -> None:
         "output": output,
         "python": python_exe,
         "resume_checkpoint": str(_checkpoint(task)),
+        "log": str(log_path) if log_path else None,
     }
     _save_state(state)
     mode = "Resumed" if resume else "Started"
     print(f"{mode} {task} training (pid {pid}).")
     print(f"Command: {' '.join(cmd)}")
+    if log_path:
+        print(f"Log: {log_path}")
 
 
 def main() -> None:
