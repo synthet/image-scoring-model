@@ -26,6 +26,9 @@ huggingface-cli download synthet/eye-pose-v0 eye_pose_v0.pt --local-dir models/
 
 `models/eye_pose_v0.pt` is used automatically when present.
 
+On Windows PowerShell, put multi-line Python in a `.py` file rather than `python -c "..."`. Nested
+quotes get mangled by PowerShell before Python sees them.
+
 ## Test vocabulary
 
 Two kinds only — say which one you ran:
@@ -41,9 +44,11 @@ distinction rather than saying "tests pass".
 ## Documentation
 
 Authority map: [docs/CANONICAL_SOURCES.md](docs/CANONICAL_SOURCES.md). Wiki hub: [docs/INDEX.md](docs/INDEX.md).
+Folder map: [LAYOUT.md](LAYOUT.md).
 
 | Guide | Description |
 |-------|-------------|
+| [LAYOUT.md](LAYOUT.md) | Top-level folder semantics |
 | [docs/README.md](docs/README.md) | Documentation hub |
 | [docs/architecture/PIPELINE.md](docs/architecture/PIPELINE.md) | Architecture and scoring |
 | [docs/architecture/BIRD_DETECTION.md](docs/architecture/BIRD_DETECTION.md) | Bird bbox detection and BioCLIP species crops |

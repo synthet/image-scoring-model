@@ -31,6 +31,7 @@ python -m eye_quality score path/to/bird.jpg --debug-dir /tmp/eye-debug
 
 | Guide | Description |
 |-------|-------------|
+| [LAYOUT.md](LAYOUT.md) | Top-level folder semantics |
 | [docs/README.md](docs/README.md) | Documentation hub |
 | [docs/INDEX.md](docs/INDEX.md) | Full wiki index |
 | [docs/architecture/PIPELINE.md](docs/architecture/PIPELINE.md) | Architecture and scoring |

@@ -1,10 +1,13 @@
 .env
 models/*
 !models/README.md
-data/
-datasets/
+data/*
+!data/INDEX.md
+datasets/*
+!datasets/INDEX.md
 debug_crops/
-runs/
+runs/*
+!runs/INDEX.md
 .agent/scratch/
 *.pt
 __pycache__/

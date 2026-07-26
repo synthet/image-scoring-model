@@ -28,3 +28,17 @@ python -m eye_quality detect path/to/bird.jpg --weights models/bird_detect_v0.pt
 ```
 
 To train your own weights from CUB-200, see [docs/guides/TRAINING.md](../docs/guides/TRAINING.md).
+
+## Publishing a checkpoint
+
+Publishing weights is a **human decision** (see [`.agent/SAFETY.md`](../.agent/SAFETY.md)). Live
+repos: [synthet/eye-pose-v0](https://huggingface.co/synthet/eye-pose-v0) and
+[synthet/bird-detect-v0](https://huggingface.co/synthet/bird-detect-v0).
+
+1. Read `HF_TOKEN` from `.env` (never echo, log, or commit it).
+2. Stage a model card (`README.md` with YAML frontmatter) plus the `.pt` under a copy of
+   [`hf/eye-pose-v0/`](../hf/eye-pose-v0/) or [`hf/bird-detect-v0/`](../hf/bird-detect-v0/) (temp dir is fine).
+3. Upload with `HfApi.upload_folder` (or `huggingface-cli upload`).
+4. Delete the staged `.pt` so it cannot be committed; keep only the card (and optional YAML) in `hf/`.
+
+Hugging Face model cards for publishing live under [`hf/`](../hf/README.md).

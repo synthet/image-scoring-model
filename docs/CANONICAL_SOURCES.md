@@ -29,6 +29,8 @@ Agents and contributors must check this map before inventing API fields, score r
 | Wiki conventions | [`WIKI_SCHEMA.md`](WIKI_SCHEMA.md) |
 | OKF frontmatter profile | [`OKF_ADOPTION.md`](OKF_ADOPTION.md) |
 | Weights download | [`../models/README.md`](../models/README.md) |
+| HF model-card staging | [`../hf/README.md`](../hf/README.md) |
+| Repository folder map | [`../LAYOUT.md`](../LAYOUT.md) |
 
 **Rule:** code and the written contract must never disagree. If you change one, change the other in the same PR. Changing field names or score ranges in the API contract is a **human decision** (see [SAFETY.md](../.agent/SAFETY.md)).
 

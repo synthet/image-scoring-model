@@ -4,6 +4,7 @@ A fast orientation for AI agents. Read this, then the canonical sources it point
 
 ## 1. Authority (don't invent contracts)
 
+- [`../LAYOUT.md`](../LAYOUT.md) — what each top-level folder is for.
 - [`../docs/CANONICAL_SOURCES.md`](../docs/CANONICAL_SOURCES.md) — where each API/schema/command/safety rule is defined.
 - [`SAFETY.md`](SAFETY.md) — secrets, weights, datasets, evaluation integrity, contracts.
 - [`../AGENTS.md`](../AGENTS.md) — build/test commands and test vocabulary.

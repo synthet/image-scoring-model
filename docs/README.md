@@ -43,20 +43,18 @@ When `models/eye_pose_v0.pt` exists, the CLI uses it automatically. Otherwise it
 
 ## Repository layout
 
+See root [`LAYOUT.md`](../LAYOUT.md) for folder semantics. Short map:
+
 ```
-src/eye_quality/       # Scoring package (localization, crop, heuristics, CLI)
-training/              # Dataset conversion and YOLO fine-tune scripts
-data/                  # Local datasets (gitignored)
-models/                # Checkpoints + base YOLO weights (gitignored; see models/README.md)
-runs/                  # Ultralytics training logs (gitignored)
-tests/                 # Unit and optional GPU inference tests
-docs/                  # LLM wiki (OKF-aligned); see INDEX.md
-hf_upload/             # Hugging Face model card (pose)
-hf_upload_detect/      # Hugging Face model card (detect)
-scripts/               # Agent-tree sync, wiki lint, CI checkers
-.agent/                # Safety, skill inventory, project guide
-.cursor/               # Canonical agent rules, commands, skills
-.claude/               # Generated mirror of .cursor/ (do not hand-edit)
+src/                   # Package — see src/INDEX.md
+training/              # Train/convert — see training/INDEX.md
+tests/                 # Pytest — see tests/INDEX.md
+docs/                  # LLM wiki — see docs/INDEX.md
+models/                # Checkpoints — see models/README.md
+hf/                    # HF cards — see hf/README.md
+scripts/               # Tooling — see scripts/INDEX.md
+data/ datasets/ runs/  # Local artifacts (gitignored; INDEX.md tracked)
+.agent/ .cursor/ .claude/
 ```
 
 ## Tests
