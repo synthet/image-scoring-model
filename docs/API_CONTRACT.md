@@ -56,11 +56,43 @@ Serialize with `result.to_api_dict()` or `result.model_dump(mode="json")`.
 
 Low-confidence results should **not** trigger auto-reject; `failure_type` stays `none`.
 
-## Bird subject box (not in API yet)
+## Bird subject box (score API)
 
-The pose model also predicts a **full bird bounding box** per detection. It is used internally for `subject_too_small` but is **not** included in `to_api_dict()` output today. Per-eye `bbox_norm` values below are small squares around each eye, not the bird subject.
+The pose model also predicts a **full bird bounding box** per detection. It is used internally for `subject_too_small` but is **not** included in `to_api_dict()` / `score` / `batch` output today. Per-eye `bbox_norm` values below are small squares around each eye, not the bird subject.
 
-To access the bird box now, call `PoseLocalizer.predict()` directly. Pad the crop before sending to BioCLIP for species ID (see [BIRD_DETECTION.md](BIRD_DETECTION.md#species-identification-with-bioclip)). A future field such as `subject_bbox_norm` may be added to the pipeline result.
+To access the bird box from the pose model, call `PoseLocalizer.predict()` directly. Pad the crop before sending to BioCLIP for species ID (see [BIRD_DETECTION.md](BIRD_DETECTION.md#species-identification-with-bioclip)). A future field such as `subject_bbox_norm` may be added to the pipeline result.
+
+## `detect` command output
+
+Separate from `score` / `batch`. Produced by `eye-quality detect` / `BirdDetector` using `models/bird_detect_v0.pt` (single class `bird`).
+
+```json
+{
+  "image": { "path": "bird.jpg", "width": 1920, "height": 1280 },
+  "model": { "name": "bird_detect_v0", "weights": "models/bird_detect_v0.pt" },
+  "birds": [
+    {
+      "bbox_xyxy": [412.0, 233.5, 1180.2, 990.7],
+      "bbox_norm": [0.214, 0.182, 0.400, 0.591],
+      "confidence": 0.973,
+      "area_frac": 0.236
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `image.path` | string | Source image path |
+| `image.width` / `height` | int | Oriented image size in pixels |
+| `model.name` | string | Stem of the weights file |
+| `model.weights` | string | Weights path used for inference |
+| `birds[].bbox_xyxy` | `[x1, y1, x2, y2]` | Pixel box in oriented image space |
+| `birds[].bbox_norm` | `[x, y, w, h]` | Normalized box (same convention as eye `bbox_norm`) |
+| `birds[].confidence` | float | Detection confidence |
+| `birds[].area_frac` | float | Box area / image area |
+
+Boxes are sorted by confidence descending. Empty `birds` means no detection above `--conf` (default 0.25).
 
 ## `detections` (per eye)
 

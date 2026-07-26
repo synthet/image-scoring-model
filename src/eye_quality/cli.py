@@ -1,4 +1,4 @@
-"""CLI for eye quality scoring."""
+"""CLI for eye quality scoring and bird detection."""
 
 from __future__ import annotations
 
@@ -31,12 +31,83 @@ def _build_parser() -> argparse.ArgumentParser:
     batch_p.add_argument("--debug-dir", type=str, default=None)
     batch_p.add_argument("--output", type=str, required=True, help="Output JSONL path")
 
+    detect_p = sub.add_parser("detect", help="Detect bird bounding boxes in an image")
+    detect_p.add_argument("path", type=str, help="Path to image file")
+    detect_p.add_argument("--weights", type=str, default=None, help="Detect weights (.pt)")
+    detect_p.add_argument("--device", type=str, default=None)
+    detect_p.add_argument("--imgsz", type=int, default=640)
+    detect_p.add_argument("--conf", type=float, default=0.25, help="Confidence threshold")
+    detect_p.add_argument("--output", type=str, default=None, help="Write JSON to file")
+
     return parser
+
+
+def _detect_payload(
+    image_path: Path,
+    *,
+    weights: str,
+    birds: list,
+) -> dict:
+    from eye_quality.localization.bird_detector import BirdBox
+
+    width = height = 0
+    if birds:
+        width = birds[0].image_width
+        height = birds[0].image_height
+    else:
+        from PIL import Image
+
+        with Image.open(image_path) as img:
+            width, height = img.size
+
+    model_name = Path(weights).stem
+    return {
+        "image": {
+            "path": str(image_path),
+            "width": width,
+            "height": height,
+        },
+        "model": {
+            "name": model_name,
+            "weights": weights,
+        },
+        "birds": [
+            {
+                "bbox_xyxy": list(b.bbox_xyxy),
+                "bbox_norm": b.bbox_norm,
+                "confidence": b.confidence,
+                "area_frac": b.area_frac,
+            }
+            for b in birds
+            if isinstance(b, BirdBox)
+        ],
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
+
+    if args.command == "detect":
+        from eye_quality.localization.bird_detector import (
+            BirdDetector,
+            resolve_detect_weights_path,
+        )
+
+        path = Path(args.path)
+        if not path.is_file():
+            print(f"Error: file not found: {path}", file=sys.stderr)
+            return 1
+        weights = resolve_detect_weights_path(args.weights)
+        detector = BirdDetector(weights=weights, device=args.device, imgsz=args.imgsz)
+        birds = detector.predict(path, conf=args.conf)
+        payload = json.dumps(_detect_payload(path, weights=weights, birds=birds), indent=2)
+        if args.output:
+            Path(args.output).write_text(payload, encoding="utf-8")
+        else:
+            print(payload)
+        return 0
+
     config = PipelineConfig(
         weights=resolve_weights_path(args.weights),
         device=args.device,

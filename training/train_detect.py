@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fine-tune Ultralytics YOLO pose for wildlife eye keypoints."""
+"""Fine-tune Ultralytics YOLO detect for wildlife bird bounding boxes."""
 
 from __future__ import annotations
 
@@ -9,16 +9,16 @@ from pathlib import Path
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Train wildlife bird pose model")
+    parser = argparse.ArgumentParser(description="Train wildlife bird detect model")
     parser.add_argument(
         "--data",
-        default="training/configs/wildlife_bird.yaml",
+        default="training/configs/wildlife_bird_det.yaml",
         help="Ultralytics dataset YAML",
     )
     parser.add_argument(
         "--base",
-        default="yolo11n-pose.pt",
-        help="Base pose weights (COCO pretrained)",
+        default="yolo11n.pt",
+        help="Base detect weights (COCO pretrained)",
     )
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--imgsz", type=int, default=640)
@@ -26,7 +26,7 @@ def main() -> None:
     parser.add_argument("--device", default=None)
     parser.add_argument(
         "--output",
-        default="models/eye_pose_v0.pt",
+        default="models/bird_detect_v0.pt",
         help="Copy best checkpoint to this path after training",
     )
     parser.add_argument(
@@ -80,7 +80,7 @@ def main() -> None:
         "epochs": args.epochs,
         "imgsz": args.imgsz,
         "batch": args.batch,
-        "project": str(repo_root / "runs" / "pose"),
+        "project": str(repo_root / "runs" / "detect"),
         "name": "wildlife_bird",
         "exist_ok": True,
         "workers": args.workers,

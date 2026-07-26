@@ -84,6 +84,76 @@ python training/train_pose.py \
 
 Ultralytics restores optimizer state and epoch counter from `last.pt`. The run continues in the same `save_dir` as the checkpoint.
 
+### 5. Pause and resume
+
+Use `training/train_ctl.py` to stop and restart long runs without hunting for PIDs or checkpoint paths:
+
+```bash
+# Show current run (PID, checkpoint, completed epochs)
+python -m training.train_ctl status --task detect
+
+# Pause the active detect or pose training process
+python -m training.train_ctl pause --task detect
+
+# Resume from runs/detect/wildlife_bird/weights/last.pt
+python -m training.train_ctl resume --task detect --epochs 100 --batch 16 --device 0
+
+# Start a new run (auto-resumes if last.pt already exists)
+python -m training.train_ctl start --task detect --epochs 100 --batch 16 --device 0 --background
+```
+
+Pose training uses `--task pose` and writes checkpoints under `runs/pose/wildlife_bird/`.
+
+State is recorded in `runs/.train_state.json`. On Windows, set `EYE_QUALITY_PYTHON` if your CUDA-enabled interpreter is not the default Store Python.
+
+Manual resume (without `train_ctl`) still works:
+
+```bash
+python training/train_pose.py \
+  --resume runs/pose/runs/pose/wildlife_bird-2/weights/last.pt \
+  --epochs 100 --batch 16 --device 0 \
+  --output models/eye_pose_v0.pt
+```
+
+### Detect-only bootstrap
+
+Same CUB boxes without keypoints — for subject localization / BioCLIP crops when eye keypoints are not needed:
+
+```bash
+# 1. Pose dataset (if not already built)
+python -m training.convert_cub200 \
+  --cub-root D:/Datasets/CUB_200_2011 \
+  --output data/wildlife_bird \
+  --val-ratio 0.15
+
+# 2. Strip keypoints → detect labels (hard-links images when possible)
+python training/make_detection_labels.py \
+  --pose-dir data/wildlife_bird \
+  --output data/wildlife_bird_det
+
+# 3. Fine-tune YOLO11n detect (run from repo root)
+python training/train_detect.py --epochs 100 --batch 16 --device 0 \
+  --output models/bird_detect_v0.pt
+```
+
+Config: `training/configs/wildlife_bird_det.yaml`. Artifacts under `runs/detect/wildlife_bird/`.
+
+Resume a paused detect run:
+
+```bash
+python training/train_detect.py \
+  --resume runs/detect/wildlife_bird/weights/last.pt \
+  --epochs 100 --batch 16 --device 0 \
+  --output models/bird_detect_v0.pt
+```
+
+Inference (bbox JSON):
+
+```bash
+python -m eye_quality detect data/wildlife_bird_det/images/val/<image>.jpg \
+  --weights models/bird_detect_v0.pt --device 0
+```
+
 ## Validation
 
 After fine-tuning, score sample images and inspect debug crops:

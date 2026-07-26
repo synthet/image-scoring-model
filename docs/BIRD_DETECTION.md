@@ -76,12 +76,61 @@ Expose `subject_bbox_norm` and `subject_confidence` on `EyeQualityPipelineResult
 | Habitat framing | Boxes are bird-tight, not "animal in scene" |
 | Generalization | Validate on your burst library before production thresholds |
 
-## Training a detect-only model (sketch)
+## Training a detect-only model
 
-1. Run the existing CUB converter to produce `data/wildlife_bird/`.
-2. Strip keypoints from label `.txt` files (keep `<class> <cx> <cy> <w> <h>` only), or add a small export script.
-3. Point an Ultralytics detect YAML at the same `images/train` and `images/val` paths with `names: {0: bird}`.
-4. Train: `YOLO("yolo11n.pt").train(data=..., epochs=100, ...)`.
+1. Convert CUB to the pose dataset (boxes + keypoints):
+
+```bash
+python -m training.convert_cub200 \
+  --cub-root D:/Datasets/CUB_200_2011 \
+  --output data/wildlife_bird \
+  --val-ratio 0.15
+```
+
+2. Strip keypoints into a detect-only dataset (box labels only):
+
+```bash
+python training/make_detection_labels.py \
+  --pose-dir data/wildlife_bird \
+  --output data/wildlife_bird_det
+```
+
+3. Fine-tune YOLO11n detect (copies `best.pt` → `models/bird_detect_v0.pt`):
+
+```bash
+python training/train_detect.py --epochs 100 --batch 16 --device 0 \
+  --output models/bird_detect_v0.pt
+```
+
+Or via `train_ctl` (pause/resume-friendly; run from repo root):
+
+```bash
+python -m training.train_ctl start --task detect --epochs 100 --batch 16 --device 0 --background
+python -m training.train_ctl status --task detect
+```
+
+Config: `training/configs/wildlife_bird_det.yaml` (`names: {0: bird}`).
+
+### Getting bbox coordinates at inference
+
+```bash
+eye-quality detect path/to/bird.jpg
+# or
+python -m eye_quality detect path/to/bird.jpg --weights models/bird_detect_v0.pt --device 0
+```
+
+Python API:
+
+```python
+from eye_quality.localization.bird_detector import BirdDetector
+
+det = BirdDetector(weights="models/bird_detect_v0.pt", device="0")
+birds = det.predict("path/to/bird.jpg")
+if birds:
+    best = birds[0]
+    x1, y1, x2, y2 = best.bbox_xyxy
+    bbox_norm = best.bbox_norm  # [x, y, w, h] normalized
+```
 
 Pose fine-tuning (`training/train_pose.py`) remains the recommended path when eye localization is also required.
 
