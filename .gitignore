@@ -2,8 +2,10 @@
 models/*
 !models/README.md
 data/
+datasets/
 debug_crops/
 runs/
+.agent/scratch/
 *.pt
 __pycache__/
 .pytest_cache/

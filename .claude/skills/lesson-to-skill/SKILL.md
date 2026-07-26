@@ -63,7 +63,7 @@ justify running this skill is its main failure mode, and it is how a skill tree 
 Default to enriching. Check [`.agent/SKILL_INVENTORY.md`](../../../.agent/SKILL_INVENTORY.md) before
 concluding a lesson has no home. A new skill must name the trigger surface that no current skill has.
 
-Training-specific lessons usually belong in [`docs/TRAINING.md`](../../../docs/TRAINING.md) or
+Training-specific lessons usually belong in [`docs/guides/TRAINING.md`](../../../docs/guides/TRAINING.md) or
 [`autonomous-run-contract`](../autonomous-run-contract/SKILL.md), not in a new skill.
 
 ## Step 4 — Write the rule, not the war story

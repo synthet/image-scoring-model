@@ -3,7 +3,7 @@
 Central list of **first-party** agent assets in this repository for governance and periodic review.
 Aligns with [OWASP Agentic Skills Top 10 — AST09](https://github.com/kenhuangus/agentic-skills-top-10#ast09--no-governance).
 
-**Last reviewed:** 2026-07-25. Companion to [SKILL_COMPILATION.md](SKILL_COMPILATION.md) and
+**Last reviewed:** 2026-07-26. Companion to [SKILL_COMPILATION.md](SKILL_COMPILATION.md) and
 [SAFETY.md](SAFETY.md).
 
 **How to use:** when adding or materially changing a skill, add a row or update **Last reviewed** in
@@ -44,6 +44,9 @@ Never hand-edit `.claude/`.
 | `/pr-ready` | Definition-of-done report plus paste-ready PR text |
 | `/compile-skill` | Lower a stable skill into a deterministic harness |
 | `/mine` | Turn a document, repo, or transcript into agent assets |
+| `/wiki-ingest` | Ingest a source into the docs wiki |
+| `/wiki-lint` | Health-check the docs wiki (structure + OKF) |
+| `/wiki-query` | Answer from the wiki; optionally file the synthesis |
 
 ## Rules (`.cursor/rules/`)
 
@@ -68,4 +71,7 @@ Violations fail the check; fix the asset rather than the checker.
 python scripts/sync_assistant_trees.py
 python scripts/sync_assistant_trees.py --check
 python scripts/ci/check_agent_frontmatter.py
+python scripts/generate_agent_asset_inventory.py --check
+python scripts/okf_lint.py --exclude-prefix archive/
+python scripts/wiki_lint.py --exclude-prefix archive/
 ```

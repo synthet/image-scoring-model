@@ -40,18 +40,20 @@ distinction rather than saying "tests pass".
 
 ## Documentation
 
+Authority map: [docs/CANONICAL_SOURCES.md](docs/CANONICAL_SOURCES.md). Wiki hub: [docs/INDEX.md](docs/INDEX.md).
+
 | Guide | Description |
 |-------|-------------|
-| [docs/README.md](docs/README.md) | Documentation index |
-| [docs/PIPELINE.md](docs/PIPELINE.md) | Architecture and scoring |
-| [docs/BIRD_DETECTION.md](docs/BIRD_DETECTION.md) | Bird bbox detection and BioCLIP species crops |
-| [docs/TRAINING.md](docs/TRAINING.md) | CUB-200 bootstrap and fine-tuning |
-| [docs/API_CONTRACT.md](docs/API_CONTRACT.md) | JSON output schema — a contract, not an implementation detail |
-| [docs/BACKEND_INTEGRATION.md](docs/BACKEND_INTEGRATION.md) | Backend and gallery wiring |
+| [docs/README.md](docs/README.md) | Documentation hub |
+| [docs/architecture/PIPELINE.md](docs/architecture/PIPELINE.md) | Architecture and scoring |
+| [docs/architecture/BIRD_DETECTION.md](docs/architecture/BIRD_DETECTION.md) | Bird bbox detection and BioCLIP species crops |
+| [docs/guides/TRAINING.md](docs/guides/TRAINING.md) | CUB-200 bootstrap and fine-tuning |
+| [docs/technical/API_CONTRACT.md](docs/technical/API_CONTRACT.md) | JSON output schema — a contract, not an implementation detail |
+| [docs/guides/BACKEND_INTEGRATION.md](docs/guides/BACKEND_INTEGRATION.md) | Backend and gallery wiring |
 
 Downstream consumers (`image-scoring-backend`, `image-scoring-gallery`) depend on the output schema.
-Changing a field name or score range is a breaking change — treat `docs/API_CONTRACT.md` as the
-source of truth and update it in the same change.
+Changing a field name or score range is a breaking change — treat
+`docs/technical/API_CONTRACT.md` as the source of truth and update it in the same change.
 
 ## Agent assets
 
@@ -61,6 +63,9 @@ source of truth and update it in the same change.
 python scripts/sync_assistant_trees.py          # regenerate .claude/ from .cursor/
 python scripts/sync_assistant_trees.py --check  # fail if out of sync
 python scripts/ci/check_agent_frontmatter.py    # frontmatter contract
+python scripts/generate_agent_asset_inventory.py --check
+python scripts/okf_lint.py --exclude-prefix archive/
+python scripts/wiki_lint.py --exclude-prefix archive/
 ```
 
 | Asset | Location |
@@ -68,7 +73,8 @@ python scripts/ci/check_agent_frontmatter.py    # frontmatter contract
 | Rules (always on) | `.cursor/rules/*.mdc` |
 | Slash commands | `.cursor/commands/*.md` |
 | Skills | `.cursor/skills/*/SKILL.md` |
-| Governance | [`.agent/SKILL_INVENTORY.md`](.agent/SKILL_INVENTORY.md), [`.agent/SAFETY.md`](.agent/SAFETY.md), [`.agent/SKILL_COMPILATION.md`](.agent/SKILL_COMPILATION.md) |
+| Governance | [`.agent/PROJECT_GUIDE.md`](.agent/PROJECT_GUIDE.md), [`.agent/AGENT_INFRA_INVENTORY.md`](.agent/AGENT_INFRA_INVENTORY.md), [`.agent/SKILL_INVENTORY.md`](.agent/SKILL_INVENTORY.md), [`.agent/SAFETY.md`](.agent/SAFETY.md), [`.agent/SKILL_COMPILATION.md`](.agent/SKILL_COMPILATION.md) |
+| Wiki / AI workflow | [docs/ai-workflow/README.md](docs/ai-workflow/README.md) |
 
 **Loop:** `/spec → /plan → /implement → /test-and-fix → /pr-ready`.
 Before any unattended training run or sweep, write the contract from

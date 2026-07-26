@@ -61,12 +61,13 @@ Before the first iteration, state all of these in the thread (or a scratch file 
 - **Objective** — one sentence, measurable.
 - **Mutable** — the training program and its hyperparameters. One config surface.
 - **Protected** — the **evaluation code and the validation split** (changing them invalidates every
-  prior comparison), `datasets/` contents, `docs/API_CONTRACT.md`, and pretrained weights pulled from
-  Hugging Face.
+  prior comparison), `data/` / `datasets/` contents, `docs/technical/API_CONTRACT.md`, and pretrained
+  weights pulled from Hugging Face. Prefer writing under `.agent/scratch/` (gitignored) for disposable
+  run artifacts.
 - **Metric and direction** — the exact eval command and the number it prints, plus whether higher or
   lower is better. Record the baseline before the first change.
 - **Run command** — how one iteration trains and evaluates, and how its output is parsed. See
-  [`docs/TRAINING.md`](../../../docs/TRAINING.md).
+  [`docs/guides/TRAINING.md`](../../../docs/guides/TRAINING.md).
 - **Keep-or-revert rule** — improvement is retained as a commit; regression or crash is reverted to
   the last retained commit.
 - **Crash policy** — fix if mechanical (OOM → lower batch size), else revert and record.

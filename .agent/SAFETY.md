@@ -17,13 +17,14 @@
 ## Publishing
 
 - Uploading weights to Hugging Face, tagging a release, or changing what
-  [`docs/API_CONTRACT.md`](../docs/API_CONTRACT.md) promises are **human decisions**. An agent
+  [`docs/technical/API_CONTRACT.md`](../docs/technical/API_CONTRACT.md) promises are **human decisions**. An agent
   prepares them and stops.
 
 ## Datasets
 
-- `datasets/` is input, not scratch. Do not rewrite, re-split, or prune it as a side effect of
-  another task.
+- Local training data lives under `data/` (gitignored). Do not rewrite, re-split, or prune it as a
+  side effect of another task.
+- `datasets/` holds local smoke fixtures (gitignored). Do not commit them.
 - Changing the validation split invalidates every previously recorded metric. If it must change, say
   so explicitly and re-baseline — do not compare across a split change.
 
@@ -36,8 +37,9 @@
 ## Contracts
 
 - Do not invent CLI flags, JSON output fields, or score ranges. The output schema is
-  [`docs/API_CONTRACT.md`](../docs/API_CONTRACT.md); downstream consumers are the backend and gallery
-  ([`docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md)).
+  [`docs/technical/API_CONTRACT.md`](../docs/technical/API_CONTRACT.md); downstream consumers are the backend and gallery
+  ([`docs/guides/BACKEND_INTEGRATION.md`](../docs/guides/BACKEND_INTEGRATION.md)).
+  Authority map: [`docs/CANONICAL_SOURCES.md`](../docs/CANONICAL_SOURCES.md).
 
 ## Git
 

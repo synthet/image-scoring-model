@@ -8,7 +8,7 @@ Wildlife eye localization (YOLO pose) and heuristic eye-focus scoring for stack-
 pip install -e ".[dev]"
 ```
 
-GPU training requires CUDA-enabled PyTorch. See [docs/TRAINING.md](docs/TRAINING.md).
+GPU training requires CUDA-enabled PyTorch. See [docs/guides/TRAINING.md](docs/guides/TRAINING.md).
 
 ## Pretrained weights
 
@@ -31,12 +31,14 @@ python -m eye_quality score path/to/bird.jpg --debug-dir /tmp/eye-debug
 
 | Guide | Description |
 |-------|-------------|
-| [docs/README.md](docs/README.md) | Documentation index |
-| [docs/PIPELINE.md](docs/PIPELINE.md) | Architecture and scoring |
-| [docs/BIRD_DETECTION.md](docs/BIRD_DETECTION.md) | Bird bbox detection and BioCLIP species crops |
-| [docs/TRAINING.md](docs/TRAINING.md) | CUB-200 bootstrap and fine-tuning |
-| [docs/API_CONTRACT.md](docs/API_CONTRACT.md) | JSON output schema |
-| [docs/BACKEND_INTEGRATION.md](docs/BACKEND_INTEGRATION.md) | Backend and gallery wiring |
+| [docs/README.md](docs/README.md) | Documentation hub |
+| [docs/INDEX.md](docs/INDEX.md) | Full wiki index |
+| [docs/architecture/PIPELINE.md](docs/architecture/PIPELINE.md) | Architecture and scoring |
+| [docs/architecture/BIRD_DETECTION.md](docs/architecture/BIRD_DETECTION.md) | Bird bbox detection and BioCLIP species crops |
+| [docs/guides/TRAINING.md](docs/guides/TRAINING.md) | CUB-200 bootstrap and fine-tuning |
+| [docs/technical/API_CONTRACT.md](docs/technical/API_CONTRACT.md) | JSON output schema |
+| [docs/guides/BACKEND_INTEGRATION.md](docs/guides/BACKEND_INTEGRATION.md) | Backend and gallery wiring |
+| [docs/CANONICAL_SOURCES.md](docs/CANONICAL_SOURCES.md) | Authority map |
 
 ## CLI
 

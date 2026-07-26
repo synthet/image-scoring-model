@@ -52,5 +52,5 @@ The MVP-1 **heuristic** focus fusion under-scores sharp eyes: a Laysan Albatross
 ### Next (Step 3 roadmap — not started)
 1. MVP 2 — learned eye-quality classifier (replaces heuristic fusion; needs labeled eye crops).
 2. Expose `subject_bbox_norm` + BioCLIP species crop handoff.
-3. Backend + gallery integration (phase 2, per `docs/BACKEND_INTEGRATION.md`).
+3. Backend + gallery integration (phase 2, per `docs/guides/BACKEND_INTEGRATION.md`).
 4. MVP 3 — stack-aware ranker.

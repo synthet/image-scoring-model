@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sync assistant trees between `.cursor/` and `.claude/`.
 
-image-scoring-backend uses **`.cursor/` as canonical** (default direction: cursor-to-claude).
+This repository uses **`.cursor/` as canonical** (default direction: cursor-to-claude).
 synthet-code-framework uses `.claude/` as canonical (direction: claude-to-cursor).
 
 Mappings (cursor-to-claude):
@@ -11,8 +11,7 @@ Mappings (cursor-to-claude):
   .cursor/rules/<n>.mdc        -> .claude/rules/<n>.md          (extension change; content kept)
 
 Only rules in MIRROR_RULES are synced cursor-to-claude (partial mirror policy).
-
-Hand-authored files (mcp.example.json, Cursor-only skills) are left untouched.
+See .agent/AGENT_INFRA_INVENTORY.md.
 """
 
 from __future__ import annotations
@@ -26,16 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # Rules mirrored to Claude per .agent/AGENT_INFRA_INVENTORY.md
 MIRROR_RULES = {
-    "agent-canonical-sources",
-    "agent-memory",
-    "backlog-queue",
-    "documentation",
-    "external-cli-subagents",
-    "graphify",
-    "image-scoring-mcp",
     "karpathy-coding",
-    "pytest-e2e-vocabulary",
-    "python-wsl-webapp-env",
     "safety-and-secrets",
     "sdlc-core",
 }

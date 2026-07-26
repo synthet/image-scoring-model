@@ -11,7 +11,7 @@ alwaysApply: true
 - Treat write-capable / destructive tools (training runs, checkpoint writes, dataset edits, execute
   code) as high-risk: prefer read-only diagnostics unless the user explicitly asks for the write.
 - Never commit model weights, checkpoints, or datasets; never overwrite a released checkpoint.
-- Publishing weights, tagging a release, or changing `docs/API_CONTRACT.md` are human decisions.
+- Publishing weights, tagging a release, or changing `docs/technical/API_CONTRACT.md` are human decisions.
 - Validate external inputs; side-effecting actions need confirmation/approval.
 
 Full detail: [`.agent/SAFETY.md`](../../.agent/SAFETY.md).

@@ -32,7 +32,7 @@ TASKS: dict[str, dict[str, str]] = {
         "name": "wildlife_bird",
         "output": "models/bird_detect_v0.pt",
         "data": "training/configs/wildlife_bird_det.yaml",
-        "base": "yolo11n.pt",
+        "base": "models/yolo11n.pt",
     },
     "pose": {
         "script": "training/train_pose.py",
@@ -40,7 +40,7 @@ TASKS: dict[str, dict[str, str]] = {
         "name": "wildlife_bird",
         "output": "models/eye_pose_v0.pt",
         "data": "training/configs/wildlife_bird.yaml",
-        "base": "yolo11n-pose.pt",
+        "base": "models/yolo11n-pose.pt",
     },
 }
 

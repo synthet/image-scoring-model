@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_FINETUNED_WEIGHTS = _REPO_ROOT / "models" / "eye_pose_v0.pt"
+DEFAULT_BASE_POSE_WEIGHTS = _REPO_ROOT / "models" / "yolo11n-pose.pt"
 
 
 def resolve_weights_path(weights: str | Path | None = None) -> str:
@@ -34,12 +35,13 @@ def resolve_weights_path(weights: str | Path | None = None) -> str:
     if DEFAULT_FINETUNED_WEIGHTS.is_file():
         return str(DEFAULT_FINETUNED_WEIGHTS)
     logger.warning(
-        "Fine-tuned weights not found at %s; falling back to yolo11n-pose.pt. "
+        "Fine-tuned weights not found at %s; falling back to %s. "
         "Download eye_pose_v0.pt from https://huggingface.co/synthet/eye-pose-v0/tree/main "
         "or run training/convert_cub200.py and training/train_pose.py first.",
         DEFAULT_FINETUNED_WEIGHTS,
+        DEFAULT_BASE_POSE_WEIGHTS,
     )
-    return "yolo11n-pose.pt"
+    return str(DEFAULT_BASE_POSE_WEIGHTS)
 
 
 DEFAULT_WEIGHTS = resolve_weights_path()

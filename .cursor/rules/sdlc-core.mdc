@@ -5,7 +5,7 @@ alwaysApply: true
 
 # SDLC core
 
-Read root **AGENTS.md** first when present; it overrides generic guidance for commands, layout, and boundaries. For session persistence, see **agent-memory** rule (`.agent-memory/memory.md`).
+Read root **AGENTS.md** first when present; it overrides generic guidance for commands, layout, and boundaries. For navigation into safety, wiki, and inventories, see [`.agent/PROJECT_GUIDE.md`](../../.agent/PROJECT_GUIDE.md).
 
 ## Execution
 

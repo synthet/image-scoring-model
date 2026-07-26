@@ -17,7 +17,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--base",
-        default="yolo11n.pt",
+        default="models/yolo11n.pt",
         help="Base detect weights (COCO pretrained)",
     )
     parser.add_argument("--epochs", type=int, default=100)
