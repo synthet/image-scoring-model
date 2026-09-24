@@ -216,6 +216,36 @@ Backend reference: [bird_species.py](https://github.com/synthet/image-scoring-ba
 | Species crop + eye focus | Fine-tuned **pose** model (one pass) |
 | Species crop only, fastest inference | **Detect-only** YOLO on same CUB boxes |
 
+## Measured gap vs an open COCO detector (2026-09-24)
+
+The backend added an arm to its owner-labelled #377 detector benchmark (339 frames). On the frames
+`bird_detect_v0` misses at 640 (137 labelled birds, 71 bird-free):
+
+| Detector | Recall | False-positive rate |
+|---|---|---|
+| `bird_detect_v0` @1280 | 82% | 63% |
+| `bird_detect_v0` tile-on-miss | 73% | 51% |
+| RTMDet-tiny (COCO, Apache-2.0) @640, animal classes ≥ 0.4 | 82% | **4%** |
+
+On bird-free frames that `bird_detect_v0` flagged at 640, RTMDet's bird class keeps only 7/28. Where
+both detect a bird, the boxes agree closely (median IoU 0.82).
+
+Both run at about 640 px input, so the gap is **training data**. The CUB-derived set has minimum box
+area 0.06, 300–500 px images and no negatives, so the model has never seen a small bird or an empty
+frame.
+
+Training priorities for the next detector version:
+
+1. **Hard negatives** from the library: bird-free frames, especially textured foliage, bark and water,
+   where the current model fires at 1280.
+2. **Small subjects:** birds under 0.05 area fraction at full camera resolution. Pseudo-label them
+   with an open COCO detector, and human-check a sample.
+3. **Raptors on textured backgrounds** (the eagle slice). COCO calls some of them `bear`, so
+   pseudo-labels must be class-agnostic ("animal").
+4. Report recall and FP on the #377 strata as the acceptance test, not only mAP on CUB validation.
+
+Full report: [backend subject-detector comparison](https://github.com/synthet/image-scoring-backend/blob/master/docs/reports/subject-detector-comparison-2026-09-24.md).
+
 ## Related docs
 
 - [PIPELINE.md](PIPELINE.md) — how localization fits the eye-quality flow

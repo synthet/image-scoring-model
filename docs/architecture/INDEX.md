@@ -12,3 +12,4 @@ okf_version: 0.1
 
 - [PIPELINE.md](PIPELINE.md) — end-to-end flow, keypoints, scoring heuristics
 - [BIRD_DETECTION.md](BIRD_DETECTION.md) — bird bounding boxes, BioCLIP crops, detect-only training
+- [eye-evidence-spec.md](eye-evidence-spec.md) — proposed MVP-2: keypoint/facing/relative eye-sharpness evidence for the backend localization rollout (clean-room)
