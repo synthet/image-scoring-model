@@ -31,6 +31,7 @@ Never hand-edit `.claude/`.
 | skill-authoring | Create/improve Cursor-canonical skills + sync | L2 | 2026-07-25 |
 | lesson-to-skill | Turn session corrections, mistakes, and repetitions into enriched or new assets | L1 | 2026-07-25 |
 | autonomous-run-contract | Metric, budget, revert rule, and stop conditions before an unattended training or sweep run | L1 | 2026-07-26 |
+| llm-wiki | Shared evidence-bound LLM Wiki via MCP `llmwiki-ro-core` / CLI | L2 | 2026-09-21 |
 
 ## Commands (`.cursor/commands/`)
 

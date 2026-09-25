@@ -26,8 +26,10 @@ huggingface-cli download synthet/eye-pose-v0 eye_pose_v0.pt --local-dir models/
 
 `models/eye_pose_v0.pt` is used automatically when present.
 
-On Windows PowerShell, put multi-line Python in a `.py` file rather than `python -c "..."`. Nested
-quotes get mangled by PowerShell before Python sees them.
+On Windows PowerShell, put multi-line Python in a `.py` file rather than `python -c "..."`.
+Nested quotes get mangled by PowerShell before Python sees them. The same shell rejects
+bash heredocs (`cat <<'EOF'`), so multi-line `git commit` messages must use
+`git commit -F <message-file>` instead.
 
 ## Test vocabulary
 
@@ -78,6 +80,7 @@ python scripts/wiki_lint.py --exclude-prefix archive/
 | Rules (always on) | `.cursor/rules/*.mdc` |
 | Slash commands | `.cursor/commands/*.md` |
 | Skills | `.cursor/skills/*/SKILL.md` |
+| Shared LLM Wiki | MCP **`llmwiki-ro-core`** + skill [`.cursor/skills/llm-wiki/SKILL.md`](.cursor/skills/llm-wiki/SKILL.md) → `D:\Projects\synthet-llm-wiki` |
 | Governance | [`.agent/PROJECT_GUIDE.md`](.agent/PROJECT_GUIDE.md), [`.agent/AGENT_INFRA_INVENTORY.md`](.agent/AGENT_INFRA_INVENTORY.md), [`.agent/SKILL_INVENTORY.md`](.agent/SKILL_INVENTORY.md), [`.agent/SAFETY.md`](.agent/SAFETY.md), [`.agent/SKILL_COMPILATION.md`](.agent/SKILL_COMPILATION.md) |
 | Wiki / AI workflow | [docs/ai-workflow/README.md](docs/ai-workflow/README.md) |
 
