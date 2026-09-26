@@ -4,7 +4,7 @@ title: Documentation Index
 description: Index of all documentation pages in the eye-quality wiki.
 resource: INDEX.md
 tags: [docs, index]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-09-25T18:00:00Z
 okf_version: 0.1
 ---
 
@@ -23,10 +23,23 @@ okf_version: 0.1
 - [architecture/PIPELINE.md](architecture/PIPELINE.md) — end-to-end scoring flow
 - [architecture/BIRD_DETECTION.md](architecture/BIRD_DETECTION.md) — bird boxes and BioCLIP crops
 
+## Planning
+
+- [planning/INDEX.md](planning/INDEX.md) — proposed model and evidence improvements
+- [planning/reference-workflow-improvement-candidates.md](planning/reference-workflow-improvement-candidates.md) — clean-room candidates for calibrated, auditable, subject-aware evidence models
+- [planning/ssl-landmark-pretraining.md](planning/ssl-landmark-pretraining.md) — self-supervised landmark pre-training on our bird crops
+- [planning/eye-location-density.md](planning/eye-location-density.md) — eye location as a density for focus overlap
+
+## Reports
+
+- [reports/INDEX.md](reports/INDEX.md) — dated measurement reports
+- [reports/teacher-pseudo-labels-v0-2026-09-25.md](reports/teacher-pseudo-labels-v0-2026-09-25.md) — RTMDet teacher pseudo-labels for bird_detect_v0
+
 ## Guides
 
 - [guides/INDEX.md](guides/INDEX.md)
 - [guides/TRAINING.md](guides/TRAINING.md) — CUB-200 bootstrap and fine-tuning
+- [guides/TEACHER_PSEUDO_LABELS.md](guides/TEACHER_PSEUDO_LABELS.md) — RTMDet teacher pseudo-labelling
 - [guides/BACKEND_INTEGRATION.md](guides/BACKEND_INTEGRATION.md) — backend and gallery wiring
 
 ## Technical reference

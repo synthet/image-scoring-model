@@ -11,4 +11,5 @@ okf_version: 0.1
 # Guides
 
 - [TRAINING.md](TRAINING.md) — CUB-200 bootstrap, fine-tuning, resume, validation
+- [TEACHER_PSEUDO_LABELS.md](TEACHER_PSEUDO_LABELS.md) — RTMDet-tiny teacher: verify, export, select pool, detect, materialize
 - [BACKEND_INTEGRATION.md](BACKEND_INTEGRATION.md) — image-scoring-backend and gallery wiring

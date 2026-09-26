@@ -4,7 +4,7 @@ title: Documentation
 description: Human entry hub for the eye-quality documentation wiki.
 resource: README.md
 tags: [docs, hub]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-09-25T18:00:00Z
 okf_version: 0.1
 ---
 
@@ -23,6 +23,15 @@ Full navigation: **[INDEX.md](INDEX.md)**. Authority map: **[CANONICAL_SOURCES.m
 | [guides/TRAINING.md](guides/TRAINING.md) | CUB-200 bootstrap, fine-tuning, resume, validation |
 | [technical/API_CONTRACT.md](technical/API_CONTRACT.md) | JSON output schema and field semantics |
 | [guides/BACKEND_INTEGRATION.md](guides/BACKEND_INTEGRATION.md) | Wiring into image-scoring-backend and gallery (phase 2) |
+
+## Planning
+
+| Document | Description |
+|----------|-------------|
+| [planning/ssl-landmark-pretraining.md](planning/ssl-landmark-pretraining.md) | Self-supervised landmark pre-training on our bird crops, top-down eye/head keypoints |
+| [planning/eye-location-density.md](planning/eye-location-density.md) | Eye location as a density; expected eye sharpness over the focus map |
+| [reports/teacher-pseudo-labels-v0-2026-09-25.md](reports/teacher-pseudo-labels-v0-2026-09-25.md) | RTMDet teacher pseudo-labels for `bird_detect_v0` (877 images, calibrated on #377) |
+| [planning/reference-workflow-improvement-candidates.md](planning/reference-workflow-improvement-candidates.md) | Clean-room candidates for evidence semantics, targeted detail inference, uncertainty, calibration, runtime conformance, and diagnostics |
 
 ## Quick start
 
