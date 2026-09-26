@@ -4,7 +4,7 @@ title: Bird bounding box detection
 description: Bird bbox detection, BioCLIP species crops, and detect-only training.
 resource: architecture/BIRD_DETECTION.md
 tags: [docs, architecture, detection]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-09-25T00:00:00Z
 okf_version: 0.1
 ---
 
@@ -143,6 +143,21 @@ if birds:
 ```
 
 Pose fine-tuning (`training/train_pose.py`) remains the recommended path when eye localization is also required.
+
+## Teacher pseudo-labels (hard negatives, small birds)
+
+CUB alone cannot teach small, distant or occluded birds, nor bird-free frames. The upstream open COCO
+detector RTMDet-tiny (Apache-2.0) is used as a **teacher**:
+- It is reimplemented in plain PyTorch in [`training/teacher/`](../../training/teacher/) and loads the
+  official checkpoint with `strict=True`.
+- It runs full-frame plus 2×2 tiles over a stratified library pool.
+- A conservative policy produces YOLO labels: only COCO `bird` ≥ 0.50 makes a box, anything ambiguous is
+  excluded, and hard negatives require no animal box ≥ 0.35 and no animal keyword.
+
+v0 produced 877 images (503 boxes, 419 negatives), calibrated on the #377 owner labels. The #377 cohort's
+folders are excluded from the pool. See
+[teacher-pseudo-labels-v0-2026-09-25.md](../reports/teacher-pseudo-labels-v0-2026-09-25.md) and
+[TEACHER_PSEUDO_LABELS.md](../guides/TEACHER_PSEUDO_LABELS.md).
 
 ## Species identification with BioCLIP
 
