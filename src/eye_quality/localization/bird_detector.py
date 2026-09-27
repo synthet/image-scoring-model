@@ -10,7 +10,9 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DETECT_WEIGHTS = _REPO_ROOT / "models" / "bird_detect_v0.pt"
+#: v1 (CUB + teacher pseudo-labels, 2026-09-27) is the default; v0 is the fallback when v1 is absent.
+DEFAULT_DETECT_WEIGHTS = _REPO_ROOT / "models" / "bird_detect_v1.pt"
+FALLBACK_DETECT_WEIGHTS = _REPO_ROOT / "models" / "bird_detect_v0.pt"
 
 
 def resolve_detect_weights_path(weights: str | Path | None = None) -> str:
@@ -21,11 +23,12 @@ def resolve_detect_weights_path(weights: str | Path | None = None) -> str:
     """
     if weights is not None and str(weights).strip():
         return str(weights)
-    if DEFAULT_DETECT_WEIGHTS.is_file():
-        return str(DEFAULT_DETECT_WEIGHTS)
+    for candidate in (DEFAULT_DETECT_WEIGHTS, FALLBACK_DETECT_WEIGHTS):
+        if candidate.is_file():
+            return str(candidate)
     raise FileNotFoundError(
-        f"Detect weights not found at {DEFAULT_DETECT_WEIGHTS}. "
-        "Train with training/train_detect.py or place bird_detect_v0.pt under models/."
+        f"Detect weights not found at {DEFAULT_DETECT_WEIGHTS} or {FALLBACK_DETECT_WEIGHTS}. "
+        "Download bird_detect_v1.pt from https://huggingface.co/synthet/bird-detect-v0 into models/."
     )
 
 

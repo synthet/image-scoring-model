@@ -39,8 +39,23 @@ def test_resolve_detect_weights_path_raises_when_missing(tmp_path: Path, monkeyp
         "eye_quality.localization.bird_detector.DEFAULT_DETECT_WEIGHTS",
         missing,
     )
+    monkeypatch.setattr(
+        "eye_quality.localization.bird_detector.FALLBACK_DETECT_WEIGHTS",
+        tmp_path / "also_nope.pt",
+    )
     with pytest.raises(FileNotFoundError, match="bird_detect"):
         resolve_detect_weights_path(None)
+
+
+def test_resolve_detect_weights_path_falls_back_to_v0(tmp_path: Path, monkeypatch):
+    v0 = tmp_path / "bird_detect_v0.pt"
+    v0.write_bytes(b"w")
+    monkeypatch.setattr(
+        "eye_quality.localization.bird_detector.DEFAULT_DETECT_WEIGHTS",
+        tmp_path / "bird_detect_v1.pt",
+    )
+    monkeypatch.setattr("eye_quality.localization.bird_detector.FALLBACK_DETECT_WEIGHTS", v0)
+    assert resolve_detect_weights_path(None) == str(v0)
 
 
 def test_resolve_detect_weights_path_explicit():
