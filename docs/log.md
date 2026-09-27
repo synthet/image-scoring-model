@@ -6,6 +6,7 @@ Format: `- YYYY-MM-DD: <verb> — <details and paths>` (verbs: `created`, `updat
 
 ## 2026-09
 
+- 2026-09-27: updated — [reports/teacher-pseudo-labels-v0-2026-09-25.md](reports/teacher-pseudo-labels-v0-2026-09-25.md): `bird_detect_v1` result on the #377 cohort (recall on v0 misses 0% -> 81%, v0 false positives halved); Hub model card `hf/bird-detect-v0/README.md` documents v0 and v1.
 - 2026-09-25: created — [reports/teacher-pseudo-labels-v0-2026-09-25.md](reports/teacher-pseudo-labels-v0-2026-09-25.md) (new [reports/INDEX.md](reports/INDEX.md)) and [guides/TEACHER_PSEUDO_LABELS.md](guides/TEACHER_PSEUDO_LABELS.md): upstream RTMDet-tiny teacher (own PyTorch implementation, 2638/2638 parity), stratified pool with #377 folder exclusion, calibrated label policy, 877 pseudo-labelled images; section added to [architecture/BIRD_DETECTION.md](architecture/BIRD_DETECTION.md); `training/teacher/` added to `training/INDEX.md`.
 - 2026-09-25: created — [planning/eye-location-density.md](planning/eye-location-density.md): eye location as a 2D density (expected eye sharpness, overlap with the focus map, uncertainty), options heatmap / Gaussian / SimCC marginals, deciding experiment.
 - 2026-09-25: created — [planning/ssl-landmark-pretraining.md](planning/ssl-landmark-pretraining.md): self-supervised landmark pre-training plan (method reimplemented from the ICCV 2021 paper; authors' unlicensed code and weights are evaluation-only), top-down keypoints fed by the backend cascade, milestones S0–S5 and gate; indexed in [planning/INDEX.md](planning/INDEX.md).

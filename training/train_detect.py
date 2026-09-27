@@ -24,6 +24,8 @@ def main() -> None:
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--device", default=None)
+    parser.add_argument("--lr0", type=float, default=None, help="initial learning rate (Ultralytics default when unset)")
+    parser.add_argument("--name", default="wildlife_bird", help="run name under runs/detect")
     parser.add_argument(
         "--output",
         default="models/bird_detect_v0.pt",
@@ -81,13 +83,15 @@ def main() -> None:
         "imgsz": args.imgsz,
         "batch": args.batch,
         "project": str(repo_root / "runs" / "detect"),
-        "name": "wildlife_bird",
+        "name": args.name,
         "exist_ok": True,
         "workers": args.workers,
         "cache": cache_val,
     }
     if args.device:
         train_kwargs["device"] = args.device
+    if args.lr0 is not None:
+        train_kwargs["lr0"] = args.lr0
 
     if args.resume:
         ckpt = Path(args.resume).resolve()
@@ -98,7 +102,7 @@ def main() -> None:
     else:
         model = YOLO(args.base)
         results = model.train(**train_kwargs)
-    save_dir = Path(getattr(results, "save_dir", None) or (Path(train_kwargs["project"]) / "wildlife_bird"))
+    save_dir = Path(getattr(results, "save_dir", None) or (Path(train_kwargs["project"]) / args.name))
     best = save_dir / "weights" / "best.pt"
 
     out = Path(args.output)

@@ -142,6 +142,23 @@ Split by folder hash (10% val), so no folder is in both.
 The data lives in `data/pseudo_rtmdet_v0/` (gitignored). Its `manifest.json` records the policy, the
 per-stratum counts and the teacher manifest with its hashes.
 
+## Result: bird_detect_v1 (2026-09-27)
+
+`bird_detect_v0` fine-tuned 30 epochs (lr0 0.002) on CUB plus this set listed 5x
+(`training/teacher/make_mixed_det_lists.py`, `training/train_detect.py --lr0 --name`). On the #377 cohort
+(owner labels, presence, Wilson 95%):
+
+| Frames | v0 | v1 |
+|---|---|---|
+| birds v0 missed (78): recall | 0% | **81% (71-88%)** |
+| bird-free frames among them (71): false positives | 0% | 7% (3-15%) |
+| frames v0 detected, with a bird (101): recall | 100% | 98% (93-99%) |
+| v0's false positives (28 bird-free): still fire | 100% | **50% (33-67%)** |
+| small birds (48) | 100% | 100% |
+
+Published as `bird_detect_v1.pt` beside v0 on the Hub model card (`hf/bird-detect-v0/README.md`). The backend
+keeps downloading v0 until its `bird_detection.model_file` is switched.
+
 ## Limitations
 
 - **The teacher has COCO's blind spots.** Very small, silhouetted or partly hidden birds end up excluded
