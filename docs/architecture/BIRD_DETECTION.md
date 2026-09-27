@@ -126,7 +126,7 @@ Config: `training/configs/wildlife_bird_det.yaml` (`names: {0: bird}`).
 ```bash
 eye-quality detect path/to/bird.jpg
 # or
-python -m eye_quality detect path/to/bird.jpg --weights models/bird_detect_v0.pt --device 0
+python -m eye_quality detect path/to/bird.jpg --weights models/bird_detect_v1.pt --device 0
 ```
 
 Python API:
@@ -134,7 +134,7 @@ Python API:
 ```python
 from eye_quality.localization.bird_detector import BirdDetector
 
-det = BirdDetector(weights="models/bird_detect_v0.pt", device="0")
+det = BirdDetector(weights="models/bird_detect_v1.pt", device="0")
 birds = det.predict("path/to/bird.jpg")
 if birds:
     best = birds[0]
@@ -143,6 +143,14 @@ if birds:
 ```
 
 Pose fine-tuning (`training/train_pose.py`) remains the recommended path when eye localization is also required.
+
+## Current weights: `bird_detect_v1` (2026-09-27)
+
+`bird_detect_v1.pt` is v0 fine-tuned on CUB plus the teacher pseudo-labels below. It is the default in
+`eye_quality.localization.bird_detector` (v0 is the fallback) and is published beside v0 on
+[synthet/bird-detect-v0](https://huggingface.co/synthet/bird-detect-v0). On the #377 cohort it finds 81% of the
+birds v0 missed (7% false positives on their bird-free frames), halves v0's false positives and keeps all small
+birds; see [the teacher report](../reports/teacher-pseudo-labels-v0-2026-09-25.md#result-bird_detect_v1-2026-09-27).
 
 ## Teacher pseudo-labels (hard negatives, small birds)
 
