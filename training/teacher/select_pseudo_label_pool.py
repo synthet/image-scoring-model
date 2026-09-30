@@ -30,6 +30,7 @@ def main():
     ap.add_argument("--exclude-cohort", required=True)
     ap.add_argument("--per-folder", type=int, default=5)
     ap.add_argument("--seed", default="teacher-v0")
+    ap.add_argument("--limit", type=int, default=None, help="Stop after N accepted frames (pilot)")
     ap.add_argument("--dsn", default="host=127.0.0.1 port=5432 dbname=image_scoring user=postgres password=postgres")
     a = ap.parse_args()
     cohort = list(csv.DictReader(open(a.exclude_cohort)))
@@ -66,6 +67,8 @@ def main():
         kws = kws or []
         pool.append(dict(image_id=iid, path=path, folder_id=folder, stratum=stratum,
                          birds_kw="birds" in kws, animal_kw=bool({"birds", "wildlife", "animals"} & set(kws))))
+        if a.limit and len(pool) >= a.limit:
+            break
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(dict(counts=counts, excluded_cohort_images=len(ex_ids),

@@ -14,6 +14,8 @@ Proposals in this folder describe candidate behavior and evaluation work. They a
 
 | Document | Description |
 |----------|-------------|
+| [bird-eye-retraining-2026-09-27.md](bird-eye-retraining-2026-09-27.md) | Recall-first retraining for both v0 models: data audits, independent holdout, controlled experiments, and release gates |
+| [llm-cli-retraining-judges.md](llm-cli-retraining-judges.md) | Backend CLI vision judges for blind label audits, missed-bird/eye review, structured consensus, and candidate quality gates |
 | [reference-workflow-improvement-candidates.md](reference-workflow-improvement-candidates.md) | Clean-room candidates for evidence contracts, targeted detail inference, uncertainty, calibration, runtime conformance, and diagnostics |
 | [eye-location-density.md](eye-location-density.md) | Eye as a 2D density: expected eye sharpness over the focus map, location uncertainty, representation options and the deciding experiment |
 | [ssl-landmark-pretraining.md](ssl-landmark-pretraining.md) | Self-supervised (invariant + equivariant) pre-training on our bird crops, top-down eye/head keypoints fine-tuned on CUB + our labels, evaluation vs eye-pose-v0 |

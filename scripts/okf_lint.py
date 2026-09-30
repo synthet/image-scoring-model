@@ -66,7 +66,11 @@ def lint_bundle(
         bundle_name=bundle_name,
         profile=profile,
     )
-    all_md = sorted(p.relative_to(docs_root).as_posix() for p in docs_root.rglob("*.md"))
+    all_md = sorted(
+        p.relative_to(docs_root).as_posix()
+        for p in docs_root.rglob("*.md")
+        if p.relative_to(docs_root).parts[0] != "private"
+    )
     report.total_md = len(all_md)
     all_md_set = set(all_md)
 

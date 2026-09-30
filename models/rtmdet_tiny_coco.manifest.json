@@ -1,0 +1,37 @@
+{
+  "model": "RTMDet-tiny COCO (80 classes)",
+  "licence": "Apache-2.0 (OpenMMLab mmdetection)",
+  "upstream_url": "https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth",
+  "checkpoint_sha256": "78e30dcce0c6f594eaff0d6977b84b4103688b4aff0ad1aa16008a8cc854a7fb",
+  "onnx_sha256": "366c677e5d3d3d45118d906a78a3b715a6cff266296740eb327790d48f8ea3cd",
+  "module": "training/teacher/rtmdet_tiny.py",
+  "module_sha256": "2e75a7679234d7d735b1c5b10c974c77429650df5a6510f33e99067a77be0cec",
+  "opset": 17,
+  "input": {
+    "layout": "NCHW",
+    "channels": "BGR",
+    "size": 640,
+    "mean": [
+      103.53,
+      116.28,
+      123.675
+    ],
+    "std": [
+      57.375,
+      57.12,
+      58.395
+    ],
+    "letterbox": "uniform scale, centred, pad 114"
+  },
+  "outputs": {
+    "boxes": "(1,8400,4) x1y1x2y2 letterbox px",
+    "scores": "(1,8400,80) sigmoid"
+  },
+  "postprocess": {
+    "pre_top_k": 5000,
+    "nms_iou": 0.65,
+    "score_thr": 0.001,
+    "per_class": 200,
+    "keep": 300
+  }
+}

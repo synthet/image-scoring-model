@@ -85,27 +85,12 @@ def _infer_bilateral_eyes(
     head_top: tuple[float, float, int] | None,
     bbox: tuple[float, float, float, float],
 ) -> tuple[tuple[float, float, int], tuple[float, float, int]]:
-    """Use CUB bilateral eyes when present; otherwise infer from head geometry."""
-    if left_eye and left_eye[2] > 0 and right_eye and right_eye[2] > 0:
-        return left_eye, right_eye
-    if left_eye and left_eye[2] > 0:
-        offset = max(bbox[2] * 0.12, 8.0)
-        return left_eye, (left_eye[0] + offset, left_eye[1], 0)
-    if right_eye and right_eye[2] > 0:
-        offset = max(bbox[2] * 0.12, 8.0)
-        return (right_eye[0] - offset, right_eye[1], 0), right_eye
-
-    # Fallback: single visible head landmark
-    anchor = forehead or head_top or beak
-    if anchor and anchor[2] > 0:
-        ax, ay, av = anchor
-        offset = max(bbox[2] * 0.10, 8.0)
-        return (ax - offset, ay, av), (ax + offset, ay, av)
-
-    x, y, w, h = bbox
-    cx, cy = x + w / 2, y + h * 0.25
-    offset = max(w * 0.10, 8.0)
-    return (cx - offset, cy, 0), (cx + offset, cy, 0)
+    """Keep observed eye coordinates only; head geometry is not an eye label."""
+    absent = (0.0, 0.0, 0)
+    return (
+        left_eye if left_eye and left_eye[2] > 0 else absent,
+        right_eye if right_eye and right_eye[2] > 0 else absent,
+    )
 
 
 def _infer_shoulders(
@@ -141,8 +126,8 @@ def map_cub_parts_to_keypoints(
     parts: dict[int, tuple[float, float, int]],
     part_ids: dict[int, str],
     bbox: tuple[float, float, float, float],
-) -> list[float] | None:
-    """Return flat COCO keypoints [x,y,v,...] for 6 schema points, or None to skip."""
+) -> list[float]:
+    """Return six COCO points, retaining bird targets even with no visible eyes."""
     id_to_name = {pid: _normalize_name(n) for pid, n in part_ids.items()}
 
     def get(name: str) -> tuple[float, float, int] | None:
@@ -161,15 +146,6 @@ def map_cub_parts_to_keypoints(
     nape = get("nape")
 
     head_top = crown if crown and crown[2] > 0 else forehead
-    has_eye = (
-        (left_eye and left_eye[2] > 0)
-        or (right_eye and right_eye[2] > 0)
-        or (forehead and forehead[2] > 0)
-        or (crown and crown[2] > 0)
-    )
-    if not has_eye:
-        return None
-
     le, re = _infer_bilateral_eyes(left_eye, right_eye, forehead, beak, head_top, bbox)
     left_sh, right_sh = _infer_shoulders(left_wing, right_wing, nape, bbox)
 
@@ -185,7 +161,8 @@ def map_cub_parts_to_keypoints(
     flat: list[float] = []
     for kname in KEYPOINT_NAMES:
         px, py, pv = named[kname]
-        flat.extend([float(px), float(py), int(pv)])
+        # CUB visibility is binary; COCO/YOLO uses 2 for an observed point.
+        flat.extend([float(px), float(py), 2] if pv > 0 else [0.0, 0.0, 0])
     return flat
 
 
