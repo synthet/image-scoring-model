@@ -10,14 +10,52 @@ from __future__ import annotations
 import pickle
 import types
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.ops import batched_nms
 
 MEAN = (103.53, 116.28, 123.675)  # BGR order, as the upstream data_preprocessor
 STD = (57.375, 57.12, 58.395)
 STRIDES = (8, 16, 32)
+
+
+def _nms_boxes(boxes: np.ndarray, scores: np.ndarray, iou_threshold: float) -> np.ndarray:
+    if len(boxes) == 0:
+        return np.zeros(0, dtype=np.int64)
+    x1, y1, x2, y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
+    areas = (x2 - x1) * (y2 - y1)
+    order = scores.argsort()[::-1]
+    keep: list[int] = []
+    while order.size > 0:
+        i = int(order[0])
+        keep.append(i)
+        if order.size == 1:
+            break
+        rest = order[1:]
+        xx1 = np.maximum(x1[i], x1[rest])
+        yy1 = np.maximum(y1[i], y1[rest])
+        xx2 = np.minimum(x2[i], x2[rest])
+        yy2 = np.minimum(y2[i], y2[rest])
+        inter = np.clip(xx2 - xx1, 0, None) * np.clip(yy2 - yy1, 0, None)
+        union = areas[i] + areas[rest] - inter
+        iou = inter / np.maximum(union, 1e-9)
+        order = rest[iou <= iou_threshold]
+    return np.asarray(keep, dtype=np.int64)
+
+
+def _batched_nms(boxes: torch.Tensor, scores: torch.Tensor, classes: torch.Tensor, iou_threshold: float) -> torch.Tensor:
+    b = boxes.detach().cpu().numpy()
+    s = scores.detach().cpu().numpy()
+    c = classes.detach().cpu().numpy()
+    keep: list[int] = []
+    for cls in np.unique(c):
+        mask = c == cls
+        idx = np.flatnonzero(mask)
+        sub = _nms_boxes(b[mask], s[mask], iou_threshold)
+        keep.extend(idx[sub].tolist())
+    keep.sort(key=lambda i: -s[i])
+    return torch.tensor(keep, dtype=torch.long, device=boxes.device)
 
 
 class ConvModule(nn.Module):
@@ -174,7 +212,7 @@ def postprocess(boxes, scores, pre_top_k=5000, iou=0.65, score_thr=0.001, per_cl
     b, s = b[top], s[top]
     cand = (s > score_thr).nonzero()
     bb, ss, cc = b[cand[:, 0]], s[cand[:, 0], cand[:, 1]], cand[:, 1]
-    k = batched_nms(bb, ss, cc, iou)
+    k = _batched_nms(bb, ss, cc, iou)
     out_k = []
     per = {}
     for i in k.tolist():

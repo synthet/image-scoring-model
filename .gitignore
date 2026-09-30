@@ -1,6 +1,7 @@
 .env
 models/*
 !models/README.md
+!models/rtmdet_tiny_coco.manifest.json
 data/*
 !data/INDEX.md
 datasets/*
@@ -9,6 +10,12 @@ debug_crops/
 runs/*
 !runs/INDEX.md
 .agent/scratch/
+# Maintainer-only proprietary / third-party notes (never commit)
+docs/private/
+.docs/private/
+codex-session-*.md
+*this-session-is-being-continued*.txt
+2026-??-??-*.txt
 *.pt
 __pycache__/
 .pytest_cache/

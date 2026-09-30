@@ -52,6 +52,11 @@ def main() -> None:
         default="disk",
         help="Cache decoded images: disk is safest on Windows; ram is fastest if memory allows",
     )
+    parser.add_argument(
+        "--name",
+        default="wildlife_bird",
+        help="Ultralytics run name (use e.g. wildlife_bird_t1 for T-series experiments)",
+    )
     args = parser.parse_args()
 
     if args.promote_only:
@@ -81,7 +86,7 @@ def main() -> None:
         "imgsz": args.imgsz,
         "batch": args.batch,
         "project": str(repo_root / "runs" / "pose"),
-        "name": "wildlife_bird",
+        "name": args.name,
         "exist_ok": True,
         "workers": args.workers,
         "cache": cache_val,

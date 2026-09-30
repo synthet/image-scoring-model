@@ -33,9 +33,33 @@ from pathlib import Path
 import numpy as np
 import torch
 from PIL import Image
-from torchvision.ops import nms
 
 from training.teacher.rtmdet_tiny import letterbox, load_upstream, postprocess
+
+
+def nms_boxes(boxes: np.ndarray, scores: np.ndarray, iou_threshold: float) -> np.ndarray:
+    """Greedy NMS; avoids torchvision (version-sensitive on some Windows Python installs)."""
+    if len(boxes) == 0:
+        return np.zeros(0, dtype=np.int64)
+    x1, y1, x2, y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
+    areas = (x2 - x1) * (y2 - y1)
+    order = scores.argsort()[::-1]
+    keep: list[int] = []
+    while order.size > 0:
+        i = int(order[0])
+        keep.append(i)
+        if order.size == 1:
+            break
+        rest = order[1:]
+        xx1 = np.maximum(x1[i], x1[rest])
+        yy1 = np.maximum(y1[i], y1[rest])
+        xx2 = np.minimum(x2[i], x2[rest])
+        yy2 = np.minimum(y2[i], y2[rest])
+        inter = np.clip(xx2 - xx1, 0, None) * np.clip(yy2 - yy1, 0, None)
+        union = areas[i] + areas[rest] - inter
+        iou = inter / np.maximum(union, 1e-9)
+        order = rest[iou <= iou_threshold]
+    return np.asarray(keep, dtype=np.int64)
 
 BIRD, ANIMALS = 14, set(range(14, 24))
 # Calibrated on the owner-labelled #377 cohort (eval only): 0.50 / 0.35 gave 1.9% bird-label FP and
@@ -46,15 +70,40 @@ LONG_EDGE, SAVE_EDGE = 2048, 1280
 TILE_FRAC, INNER_EDGE_TOL = 0.6, 0.01
 
 
+def wsl_to_win(path: str) -> str:
+    """``/mnt/d/Photos/x`` -> ``D:\\Photos\\x``."""
+    import re
+
+    m = re.match(r"^/mnt/([a-zA-Z])/(.*)$", path)
+    if m:
+        return f"{m.group(1).upper()}:\\" + m.group(2).replace("/", "\\")
+    return path
+
+
 def decode(path: str) -> Image.Image:
     """Display-oriented RGB. Uses the backend's decoder when importable (same route as the benchmarks)."""
+    from io import BytesIO
+
+    from PIL import ImageOps
+
+    path = wsl_to_win(path)
     try:
         from modules.thumbnails import bake_orientation, open_rendition_for_ml
         img, _ = open_rendition_for_ml(path)
         return bake_orientation(img.convert("RGB"), path)
     except ImportError:
-        from PIL import ImageOps
-        return ImageOps.exif_transpose(Image.open(path)).convert("RGB")
+        p = Path(path)
+        try:
+            return ImageOps.exif_transpose(Image.open(path)).convert("RGB")
+        except OSError:
+            if p.suffix.lower() not in {".nef", ".nrw", ".arw", ".cr2", ".cr3", ".dng", ".orf", ".rw2"}:
+                raise
+            from training.build_eye_dataset import extract_full_preview
+
+            preview = extract_full_preview(p)
+            if preview is None:
+                raise
+            return ImageOps.exif_transpose(Image.open(BytesIO(preview[0]))).convert("RGB")
 
 
 def run_teacher(model, rgb: np.ndarray, device):
@@ -91,7 +140,7 @@ def detect(model, im: Image.Image, device):
     animal = np.isin(c, list(ANIMALS))
     b, s, c = b[animal], s[animal], c[animal]
     if len(b):
-        k = nms(torch.from_numpy(b).float(), torch.from_numpy(s).float(), 0.5).numpy()
+        k = nms_boxes(b, s, 0.5)
         b, s, c = b[k], s[k], c[k]
     return b, s, c, W, H
 
