@@ -29,6 +29,14 @@ python -m eye_quality detect path/to/bird.jpg --weights models/bird_detect_v0.pt
 
 To train your own weights from CUB-200, see [docs/guides/TRAINING.md](../docs/guides/TRAINING.md).
 
+## DINOv3 (third-party backbones)
+
+Meta's DINOv3 weights live in `models/dinov3/` and are **never committed**: they are under the
+custom DINOv3 License, and redistribution requires the licence and a "Built with DINOv3" notice.
+[`dinov3.manifest.json`](dinov3.manifest.json) records every file with its full SHA-256, the Hugging
+Face repo and the links. Access, licence terms, loading and recipes are in
+[docs/guides/DINOV3_COOKBOOK.md](../docs/guides/DINOV3_COOKBOOK.md).
+
 ## Publishing a checkpoint
 
 Publishing weights is a **human decision** (see [`.agent/SAFETY.md`](../.agent/SAFETY.md)). Live

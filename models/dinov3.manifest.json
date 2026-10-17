@@ -1,0 +1,156 @@
+{
+  "model": "DINOv3 (Meta AI) self-supervised vision backbones",
+  "licence": "DINOv3 License (custom, not open source): https://github.com/facebookresearch/dinov3/blob/main/LICENSE.md",
+  "redistribution": "Weights are not committed. Shipping weights or derivatives requires the DINOv3 License text and a prominent 'Built with DINOv3'.",
+  "upstream_code": "https://github.com/facebookresearch/dinov3",
+  "upstream_code_commit_tested": "6876159a11b4df116f30f667f8c9888617df0751",
+  "download_request": "https://ai.meta.com/resources/models-and-libraries/dinov3-downloads/",
+  "huggingface_collection": "https://huggingface.co/collections/facebook/dinov3-68924841bd6b561778e31009",
+  "local_dir": "models/dinov3/ (gitignored)",
+  "selection": "Models that run inference on an 8 GB GPU (RTX 4060). ViT-7B/16 (LVD and SAT) and its task heads were not downloaded.",
+  "downloaded": "2026-10-16",
+  "input": {
+    "layout": "NCHW",
+    "channels": "RGB",
+    "patch_size": 16,
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "note": "Side a multiple of 16; the near-duplicate study uses 336 px letterbox (21x21 patches)."
+  },
+  "outputs": {
+    "x_norm_clstoken": "(N, D) global embedding",
+    "x_norm_patchtokens": "(N, H/16*W/16, D) dense patch features",
+    "x_storage_tokens": "(N, 4, D) register tokens"
+  },
+  "files": [
+    {
+      "file": "dinov3_convnext_base_pretrain_lvd1689m-801f2ba9.pth",
+      "architecture": "ConvNeXt-B",
+      "params": "89M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 354013286,
+      "sha256": "801f2ba95801bdcc9a8b77e293d38b35b355dbc813ef609cd82e18c3a185e8da",
+      "hub_entry": "dinov3_convnext_base",
+      "huggingface_repo": "facebook/dinov3-convnext-base-pretrain-lvd1689m"
+    },
+    {
+      "file": "dinov3_convnext_large_pretrain_lvd1689m-61fa432d.pth",
+      "architecture": "ConvNeXt-L",
+      "params": "198M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 818663938,
+      "sha256": "61fa432da5aa0e71bc8e49ce4179f4a4d1d95e4c084a81705c476316bfa3eb33",
+      "hub_entry": "dinov3_convnext_large",
+      "huggingface_repo": "facebook/dinov3-convnext-large-pretrain-lvd1689m"
+    },
+    {
+      "file": "dinov3_convnext_small_pretrain_lvd1689m-296db49d.pth",
+      "architecture": "ConvNeXt-S",
+      "params": "50M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 201537738,
+      "sha256": "296db49dcbd622625befd3fc23318cbbcd98049f4c4b0cc026463de6bcd24952",
+      "hub_entry": "dinov3_convnext_small",
+      "huggingface_repo": "facebook/dinov3-convnext-small-pretrain-lvd1689m"
+    },
+    {
+      "file": "dinov3_convnext_tiny_pretrain_lvd1689m-21b726bb.pth",
+      "architecture": "ConvNeXt-T",
+      "params": "29M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 112235916,
+      "sha256": "21b726bb286e037f00a23fb4699fa9bda9c75b6a615bd57ce3013cec1b528d54",
+      "hub_entry": "dinov3_convnext_tiny",
+      "huggingface_repo": "facebook/dinov3-convnext-tiny-pretrain-lvd1689m"
+    },
+    {
+      "file": "dinov3_vitb16_pretrain_lvd1689m-73cec8be.pth",
+      "architecture": "ViT-B/16",
+      "params": "86M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 342860279,
+      "sha256": "73cec8be7427c8655ceced13ce62f6e20a1fa90d1b4d4a550df17a1144081a7c",
+      "hub_entry": "dinov3_vitb16",
+      "huggingface_repo": "facebook/dinov3-vitb16-pretrain-lvd1689m"
+    },
+    {
+      "file": "dinov3_vith16plus_pretrain_lvd1689m-7c1da9a5.pth",
+      "architecture": "ViT-H+/16",
+      "params": "840M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 3363232567,
+      "sha256": "7c1da9a54b3bdb333f5ebc42e404b7f19b1b5bed504877623c9dc87397f41488",
+      "hub_entry": "dinov3_vith16plus",
+      "huggingface_repo": "facebook/dinov3-vith16plus-pretrain-lvd1689m"
+    },
+    {
+      "file": "dinov3_vitl16_dinotxt_vision_head_and_text_encoder-a442d8f5.pth",
+      "architecture": "ViT-L/16",
+      "params": "300M",
+      "kind": "dinotxt",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 2253936683,
+      "sha256": "a442d8f52a3a7ad715bf6b7d8117fb3a84d54249389b0a13f6956cd0d2eca4f0",
+      "hub_entry": null,
+      "huggingface_repo": null
+    },
+    {
+      "file": "dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth",
+      "architecture": "ViT-L/16",
+      "params": "300M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 1213050671,
+      "sha256": "8aa4cbddda325040fc78db2c272754af6ebe8ff2c55f6ec4f1964d8890f66035",
+      "hub_entry": "dinov3_vitl16",
+      "huggingface_repo": "facebook/dinov3-vitl16-pretrain-lvd1689m"
+    },
+    {
+      "file": "dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth",
+      "architecture": "ViT-L/16",
+      "params": "300M",
+      "kind": "backbone",
+      "pretraining_data": "SAT-493M",
+      "bytes": 1213059235,
+      "sha256": "eadcf0ffc02418b6c22a885ea1a7aaeeef84fbf0f5bb4d0b7d1d36e68a964f48",
+      "hub_entry": "dinov3_vitl16",
+      "huggingface_repo": "facebook/dinov3-vitl16-pretrain-sat493m"
+    },
+    {
+      "file": "dinov3_vits16_pretrain_lvd1689m-08c60483.pth",
+      "architecture": "ViT-S/16",
+      "params": "21M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 86531063,
+      "sha256": "08c60483bc63c04f533611e34bf70b120eedb7240f469bc16e9e20bf344b941d",
+      "hub_entry": "dinov3_vits16",
+      "huggingface_repo": "facebook/dinov3-vits16-pretrain-lvd1689m"
+    },
+    {
+      "file": "dinov3_vits16plus_pretrain_lvd1689m-4057cbaa.pth",
+      "architecture": "ViT-S+/16",
+      "params": "29M",
+      "kind": "backbone",
+      "pretraining_data": "LVD-1689M",
+      "bytes": 114924783,
+      "sha256": "4057cbaaad8c16657adb09d6815f28d4164eeba30532fde23f0d17313124caea",
+      "hub_entry": "dinov3_vits16plus",
+      "huggingface_repo": "facebook/dinov3-vits16plus-pretrain-lvd1689m"
+    }
+  ]
+}
