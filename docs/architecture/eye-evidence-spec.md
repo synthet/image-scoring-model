@@ -1,9 +1,9 @@
 ---
 type: Architecture Plan
 title: Eye evidence spec (MVP-2 direction)
-description: Clean-room functional spec for eye keypoints, eye visibility/facing and burst-relative eye sharpness; fixes the MVP-1 under-scoring of sharp eyes and defines the payload the backend localization rollout consumes.
+description: Functional spec for eye keypoints, eye visibility/facing and burst-relative eye sharpness; fixes the MVP-1 under-scoring of sharp eyes and defines the payload the backend localization rollout consumes.
 resource: architecture/eye-evidence-spec.md
-tags: [docs, architecture, eye-quality, keypoints, scoring, clean-room]
+tags: [docs, architecture, eye-quality, keypoints, scoring]
 timestamp: 2026-09-24T00:00:00Z
 okf_version: 0.1
 status: proposed
@@ -14,7 +14,7 @@ status: proposed
 > **Status:** proposal. It complements [PIPELINE.md](PIPELINE.md) and the stable
 > [API contract](../technical/API_CONTRACT.md). New fields are **additive**.
 
-## Provenance (clean-room)
+## Provenance 
 
 This spec comes from a competitive analysis of a commercial wildlife burst-culling application's
 documented and observable behaviour. That application uses a dedicated bird head/eye keypoint model
@@ -26,9 +26,9 @@ to re-fit on our own labels.
 
 ## Where this fits
 
-The backend's [early localization rollout](https://github.com/synthet/image-scoring-backend/blob/master/docs/architecture/pipeline/localization-rollout.md)
+The backend's [early localization rollout](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/architecture/pipeline/localization-rollout.md)
 creates versioned subject regions. The backend's
-[subject-aware culling evidence](https://github.com/synthet/image-scoring-backend/blob/master/docs/planning/subject-aware-culling-evidence.md)
+[subject-aware culling evidence](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/planning/subject-aware-culling-evidence.md)
 plan defines six subject-conditioned criteria, and this package owns **criterion 2 (eye)**:
 
 - **Stage 4:** this package runs as a *keypoint provider* on the primary bird region, and its points

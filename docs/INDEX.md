@@ -17,6 +17,11 @@ okf_version: 0.1
 - [WIKI_SCHEMA.md](WIKI_SCHEMA.md) — wiki structure and maintenance
 - [OKF_ADOPTION.md](OKF_ADOPTION.md) — OKF profile and lint
 
+## Feature specifications
+
+- [features/README.md](features/README.md)
+- [features/visual-evidence-providers-spec.md](features/visual-evidence-providers-spec.md)
+
 ## Architecture
 
 - [architecture/INDEX.md](architecture/INDEX.md)
@@ -26,7 +31,7 @@ okf_version: 0.1
 ## Planning
 
 - [planning/INDEX.md](planning/INDEX.md) — proposed model and evidence improvements
-- [planning/reference-workflow-improvement-candidates.md](planning/reference-workflow-improvement-candidates.md) — clean-room candidates for calibrated, auditable, subject-aware evidence models
+- [planning/reference-workflow-improvement-candidates.md](planning/reference-workflow-improvement-candidates.md) — improvement candidates for calibrated, auditable, subject-aware evidence models
 - [planning/ssl-landmark-pretraining.md](planning/ssl-landmark-pretraining.md) — self-supervised landmark pre-training on our bird crops
 - [planning/eye-location-density.md](planning/eye-location-density.md) — eye location as a density for focus overlap
 
@@ -64,3 +69,7 @@ okf_version: 0.1
 ## Activity
 
 - [log.md](log.md) — append-only wiki log
+
+## As-built behavior
+
+- [Source-derived specifications](specs/as-built/INDEX.md) — observed behavior, contracts, regression evidence and gaps.

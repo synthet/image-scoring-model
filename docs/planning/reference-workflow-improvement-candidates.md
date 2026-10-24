@@ -1,9 +1,9 @@
 ---
 type: Plan
 title: Evidence model improvement candidates
-description: Clean-room proposals for calibrated, auditable, subject-aware evidence models and runtime contracts.
+description: proposals for calibrated, auditable, subject-aware evidence models and runtime contracts.
 resource: docs/planning/reference-workflow-improvement-candidates.md
-tags: [planning, models, evidence, calibration, clean-room]
+tags: [planning, models, evidence, calibration]
 timestamp: 2026-09-25T18:00:00Z
 okf_version: 0.1
 status: proposed

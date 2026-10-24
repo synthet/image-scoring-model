@@ -27,7 +27,7 @@ DINOv3 is under the custom **DINOv3 License**, not an open-source licence:
 | Commercial product | Yes, subject to the terms |
 | Ship weights or derivatives (for example inside an Electron app) | Only with the licence text included and a prominent **"Built with DINOv3"** |
 | Publish a benchmark or research result | Must acknowledge DINOv3 |
-| Reverse engineer undisclosed components | No |
+| Inspect undisclosed components | No |
 | Military, nuclear, espionage or weapons use; sanctions or export violations | No |
 
 Meta can change or terminate the licence, gives no warranties, and the user indemnifies

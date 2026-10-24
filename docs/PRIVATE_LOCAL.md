@@ -3,7 +3,7 @@ type: Guide
 title: Local private documentation
 description: Gitignored docs/private/ holds proprietary teacher manifests, hashes, and third-party reference inventories.
 resource: docs/PRIVATE_LOCAL.md
-tags: [guide, privacy, clean-room]
+tags: [guide, privacy]
 timestamp: 2026-09-29T00:00:00Z
 okf_version: 0.1
 ---
