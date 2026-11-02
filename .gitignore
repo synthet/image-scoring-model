@@ -13,6 +13,8 @@ runs/*
 # Maintainer-only proprietary / third-party notes (never commit)
 docs/private/
 .docs/private/
+# Local-only notes and session archives (never commit)
+/docs/_local/
 codex-session-*.md
 *this-session-is-being-continued*.txt
 2026-??-??-*.txt
