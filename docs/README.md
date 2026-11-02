@@ -31,7 +31,7 @@ Full navigation: **[INDEX.md](INDEX.md)**. Authority map: **[CANONICAL_SOURCES.m
 | [planning/ssl-landmark-pretraining.md](planning/ssl-landmark-pretraining.md) | Self-supervised landmark pre-training on our bird crops, top-down eye/head keypoints |
 | [planning/eye-location-density.md](planning/eye-location-density.md) | Eye location as a density; expected eye sharpness over the focus map |
 | [reports/teacher-pseudo-labels-v0-2026-09-25.md](reports/teacher-pseudo-labels-v0-2026-09-25.md) | RTMDet teacher pseudo-labels for `bird_detect_v0` (877 images, calibrated on #377) |
-| [planning/reference-workflow-improvement-candidates.md](planning/reference-workflow-improvement-candidates.md) | Clean-room candidates for evidence semantics, targeted detail inference, uncertainty, calibration, runtime conformance, and diagnostics |
+| [planning/reference-workflow-improvement-candidates.md](planning/reference-workflow-improvement-candidates.md) | Improvement candidates for evidence semantics, targeted detail inference, uncertainty, calibration, runtime conformance, and diagnostics |
 
 ## Quick start
 
