@@ -2,7 +2,7 @@
 
 Pattern adapted from [Compiling an AI agent skill](https://vivekhaldar.com/articles/compiling-an-ai-agent-skill/)
 (Vivek Haldar / Token Shrinker method). Sibling implementation with real harnesses:
-[`image-scoring-backend/.agent/SKILL_COMPILATION.md`](https://github.com/synthet/image-scoring-backend/blob/main/.agent/SKILL_COMPILATION.md).
+[`image-scoring-pipeline/.agent/SKILL_COMPILATION.md`](https://github.com/synthet/image-scoring-pipeline/blob/main/.agent/SKILL_COMPILATION.md).
 
 ## Why
 

@@ -9,7 +9,8 @@
         "D:/Projects/synthet-llm-wiki",
         "python",
         "D:/Projects/synthet-llm-wiki/scripts/run_llmwiki_mcp.py"
-      ]
+      ],
+      "type": "stdio"
     }
   }
 }

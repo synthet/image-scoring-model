@@ -1,0 +1,24 @@
+---
+trigger: always_on
+description: "Core SDLC expectations for all agent work in this repo"
+---
+
+# SDLC core
+
+Read root **AGENTS.md** first when present; it overrides generic guidance for commands, layout, and boundaries. For navigation into safety, wiki, and inventories, see [`.agent/PROJECT_GUIDE.md`](../../.agent/PROJECT_GUIDE.md).
+
+## Execution
+
+- Prefer **small, focused** changes over drive-by refactors.
+- **Run** the project’s lint and tests (see AGENTS.md) before claiming work is complete; if they cannot run, say why.
+- Use the **terminal** to investigate; do not only suggest commands for the user to run.
+- **Do not** commit secrets, API keys, or `.env` files with real credentials.
+
+## Communication
+
+- Use proper **code citations** when referencing existing code (line-range blocks with path).
+- Keep explanations proportional to task complexity.
+
+## Scope
+
+- Implement what was asked; avoid expanding scope unless the user explicitly widens it.

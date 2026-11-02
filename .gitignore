@@ -25,3 +25,7 @@ __pycache__/
 .venv/
 dist/
 build/
+
+# Local agent instruction files; they carry project-prohibited wording (never commit)
+/CLAUDE.md
+/GEMINI.md
