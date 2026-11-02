@@ -22,7 +22,7 @@ Full navigation: **[INDEX.md](INDEX.md)**. Authority map: **[CANONICAL_SOURCES.m
 | [architecture/BIRD_DETECTION.md](architecture/BIRD_DETECTION.md) | Bird bounding boxes, BioCLIP species crops, detect-only training |
 | [guides/TRAINING.md](guides/TRAINING.md) | CUB-200 bootstrap, fine-tuning, resume, validation |
 | [technical/API_CONTRACT.md](technical/API_CONTRACT.md) | JSON output schema and field semantics |
-| [guides/BACKEND_INTEGRATION.md](guides/BACKEND_INTEGRATION.md) | Wiring into image-scoring-backend and gallery (phase 2) |
+| [guides/BACKEND_INTEGRATION.md](guides/BACKEND_INTEGRATION.md) | Wiring into image-scoring-pipeline and gallery (phase 2) |
 
 ## Planning
 
