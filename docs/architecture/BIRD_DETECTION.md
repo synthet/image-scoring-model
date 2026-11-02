@@ -105,11 +105,10 @@ python training/make_detection_labels.py \
   --output data/wildlife_bird_det
 ```
 
-3. Fine-tune YOLO11n detect (copies `best.pt` → `models/bird_detect_v0.pt`):
+3. Fine-tune YOLO11n detect (copies `best.pt` to a run-scoped candidate path):
 
 ```bash
-python training/train_detect.py --epochs 100 --batch 16 --device 0 \
-  --output models/bird_detect_v0.pt
+python training/train_detect.py --name cub_detect_1 --epochs 100 --batch 16 --device 0
 ```
 
 Or via `train_ctl` (pause/resume-friendly; run from repo root):
@@ -219,7 +218,7 @@ crop = oriented.image.crop((int(x1), int(y1), int(x2), int(y2)))
 # → pass crop to pybioclip TreeOfLifeClassifier or backend bird_species runner
 ```
 
-Backend reference: [bird_species.py](https://github.com/synthet/image-scoring-backend/blob/main/modules/bird_species.py). Wire the subject crop there rather than duplicating BioCLIP in this repo unless you add a dedicated species module later.
+Backend reference: [bird_species.py](https://github.com/synthet/image-scoring-pipeline/blob/main/modules/bird_species.py). Wire the subject crop there rather than duplicating BioCLIP in this repo unless you add a dedicated species module later.
 
 ### BioCLIP caveats
 
@@ -267,7 +266,7 @@ Training priorities for the next detector version:
    pseudo-labels must be class-agnostic ("animal").
 4. Report recall and FP on the #377 strata as the acceptance test, not only mAP on CUB validation.
 
-Full report: [backend subject-detector comparison](https://github.com/synthet/image-scoring-backend/blob/master/docs/reports/subject-detector-comparison-2026-09-24.md).
+Full report: [backend subject-detector comparison](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/reports/subject-detector-comparison-2026-09-24.md).
 
 ## Related docs
 
