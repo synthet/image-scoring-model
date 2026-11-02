@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from training.run_safety import prepare_run_paths
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 STATE_FILE = REPO_ROOT / "runs" / ".train_state.json"
 
@@ -30,7 +32,7 @@ TASKS: dict[str, dict[str, str]] = {
         "script": "training/train_detect.py",
         "project": "runs/detect",
         "name": "wildlife_bird",
-        "output": "models/bird_detect_v0.pt",
+        "output": "models/candidates/detect_wildlife_bird.pt",
         "data": "training/configs/wildlife_bird_det.yaml",
         "base": "models/yolo11n.pt",
     },
@@ -38,7 +40,7 @@ TASKS: dict[str, dict[str, str]] = {
         "script": "training/train_pose.py",
         "project": "runs/pose",
         "name": "wildlife_bird",
-        "output": "models/eye_pose_v0.pt",
+        "output": "models/candidates/pose_wildlife_bird.pt",
         "data": "training/configs/wildlife_bird.yaml",
         "base": "models/yolo11n-pose.pt",
     },
@@ -317,6 +319,7 @@ def cmd_resume(args: argparse.Namespace) -> None:
     cache = args.cache or state.get("cache", "disk")
     output = args.output or state.get("output", TASKS[task]["output"])
     python_exe = args.python or state.get("python", DEFAULT_PYTHON)
+    prepare_run_paths(REPO_ROOT, task, TASKS[task]["name"], output, resume=_checkpoint(task))
 
     cmd = _build_train_command(
         task,
@@ -367,6 +370,8 @@ def cmd_start(args: argparse.Namespace) -> None:
     output = args.output or TASKS[task]["output"]
     python_exe = args.python or DEFAULT_PYTHON
     resume = args.resume or _checkpoint(task).is_file()
+    prepare_run_paths(REPO_ROOT, task, TASKS[task]["name"], output,
+                      resume=_checkpoint(task) if resume else None)
 
     cmd = _build_train_command(
         task,

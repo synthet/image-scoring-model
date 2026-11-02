@@ -26,8 +26,8 @@ def main() -> None:
     parser.add_argument("--device", default=None)
     parser.add_argument(
         "--output",
-        default="models/eye_pose_v0.pt",
-        help="Copy best checkpoint to this path after training",
+        default=None,
+        help="Candidate output (default: models/candidates/pose_<name>.pt)",
     )
     parser.add_argument(
         "--resume",
@@ -38,7 +38,7 @@ def main() -> None:
         "--promote-only",
         default=None,
         help="Skip training: copy this checkpoint (e.g. best.pt) to --output and exit. "
-        "Use to publish weights from an interrupted run.",
+        "Use to preserve a candidate from an interrupted run.",
     )
     parser.add_argument(
         "--workers",
@@ -58,6 +58,12 @@ def main() -> None:
         help="Ultralytics run name (use e.g. wildlife_bird_t1 for T-series experiments)",
     )
     args = parser.parse_args()
+    if __package__:
+        from .run_safety import candidate_output_path, prepare_run_paths
+    else:
+        from run_safety import candidate_output_path, prepare_run_paths
+
+    repo_root = Path(__file__).resolve().parents[1]
 
     if args.promote_only:
         import shutil
@@ -65,11 +71,15 @@ def main() -> None:
         src = Path(args.promote_only).resolve()
         if not src.is_file():
             raise SystemExit(f"Checkpoint to promote not found: {src}")
-        out = Path(args.output)
+        out = candidate_output_path(repo_root, "pose", args.name, args.output)
+        if out.exists():
+            raise SystemExit(f"Candidate output already exists: {out}")
         out.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, out)
-        print(f"Promoted {src} -> {out}")
+        print(f"Copied candidate {src} -> {out}")
         return
+
+    run_dir, out = prepare_run_paths(repo_root, "pose", args.name, args.output, resume=args.resume)
 
     cache_val: bool | str = False
     if args.cache == "ram":
@@ -79,15 +89,14 @@ def main() -> None:
 
     from ultralytics import YOLO
 
-    repo_root = Path(__file__).resolve().parents[1]
     train_kwargs = {
         "data": str(Path(args.data).resolve()),
         "epochs": args.epochs,
         "imgsz": args.imgsz,
         "batch": args.batch,
-        "project": str(repo_root / "runs" / "pose"),
+        "project": str(run_dir.parent),
         "name": args.name,
-        "exist_ok": True,
+        "exist_ok": bool(args.resume),
         "workers": args.workers,
         "cache": cache_val,
     }
@@ -103,14 +112,15 @@ def main() -> None:
     else:
         model = YOLO(args.base)
         results = model.train(**train_kwargs)
-    save_dir = Path(getattr(results, "save_dir", None) or (Path(train_kwargs["project"]) / "wildlife_bird"))
+    save_dir = Path(getattr(results, "save_dir", None) or run_dir)
     best = save_dir / "weights" / "best.pt"
 
-    out = Path(args.output)
-    out.parent.mkdir(parents=True, exist_ok=True)
     if best.is_file():
         import shutil
 
+        if out.exists() and not args.resume:
+            raise SystemExit(f"Candidate output appeared during training: {out}")
+        out.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(best, out)
         print(f"Saved best weights to {out}")
     else:
