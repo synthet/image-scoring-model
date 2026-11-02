@@ -58,7 +58,7 @@ Folder map: [LAYOUT.md](LAYOUT.md).
 | [docs/technical/API_CONTRACT.md](docs/technical/API_CONTRACT.md) | JSON output schema — a contract, not an implementation detail |
 | [docs/guides/BACKEND_INTEGRATION.md](docs/guides/BACKEND_INTEGRATION.md) | Backend and gallery wiring |
 
-Downstream consumers (`image-scoring-backend`, `image-scoring-gallery`) depend on the output schema.
+Downstream consumers (`image-scoring-pipeline`, `image-scoring-gallery`) depend on the output schema.
 Changing a field name or score range is a breaking change — treat
 `docs/technical/API_CONTRACT.md` as the source of truth and update it in the same change.
 

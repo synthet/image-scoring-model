@@ -26,9 +26,9 @@ to re-fit on our own labels.
 
 ## Where this fits
 
-The backend's [early localization rollout](https://github.com/synthet/image-scoring-backend/blob/master/docs/architecture/pipeline/localization-rollout.md)
+The backend's [early localization rollout](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/architecture/pipeline/localization-rollout.md)
 creates versioned subject regions. The backend's
-[subject-aware culling evidence](https://github.com/synthet/image-scoring-backend/blob/master/docs/planning/subject-aware-culling-evidence.md)
+[subject-aware culling evidence](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/planning/subject-aware-culling-evidence.md)
 plan defines six subject-conditioned criteria, and this package owns **criterion 2 (eye)**:
 
 - **Stage 4:** this package runs as a *keypoint provider* on the primary bird region, and its points
