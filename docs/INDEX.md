@@ -26,7 +26,7 @@ okf_version: 0.1
 ## Planning
 
 - [planning/INDEX.md](planning/INDEX.md) — proposed model and evidence improvements
-- [planning/reference-workflow-improvement-candidates.md](planning/reference-workflow-improvement-candidates.md) — clean-room candidates for calibrated, auditable, subject-aware evidence models
+- [planning/reference-workflow-improvement-candidates.md](planning/reference-workflow-improvement-candidates.md) — improvement candidates for calibrated, auditable, subject-aware evidence models
 - [planning/ssl-landmark-pretraining.md](planning/ssl-landmark-pretraining.md) — self-supervised landmark pre-training on our bird crops
 - [planning/eye-location-density.md](planning/eye-location-density.md) — eye location as a density for focus overlap
 
