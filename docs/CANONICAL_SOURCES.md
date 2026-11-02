@@ -14,6 +14,7 @@ Agents and contributors must check this map before inventing API fields, score r
 
 | Contract / convention | Source of truth |
 |-----------------------|-----------------|
+| Cross-repo vision terms (burst, stack, same moment, sharpness, box format) | [hub `vision-terms-contract.md`](https://github.com/synthet/image-scoring/blob/main/docs/specs/vision-terms-contract.md) |
 | Public JSON output schema | [`technical/API_CONTRACT.md`](technical/API_CONTRACT.md) |
 | Pipeline / scoring design | [`architecture/PIPELINE.md`](architecture/PIPELINE.md) |
 | Bird bbox detection | [`architecture/BIRD_DETECTION.md`](architecture/BIRD_DETECTION.md) |
