@@ -53,8 +53,8 @@ pose training. Preview inspection alone is insufficient to certify tiny or dista
 T0/T1 training and the proposed 45/40/15 blend are on hold. The current field data has no
 approved eye pseudo-labels or human-verified negatives. `training/partial_pose.py` is a loss
 primitive; `training/train_pose.py` still uses the stock trainer and does not carry
-`annotation_known` through augmentation, matching, and loss. The Store Python environment
-also fails to import the trainer because `torchvision::nms` is missing.
+`annotation_known` through augmentation, matching, and loss. At the initial audit, the Store Python
+environment also failed to import the trainer because `torchvision::nms` was missing.
 
 `pseudo_label_eye materialize` now treats teacher-negative decisions as audit-only and
 rejects records with candidate eye labels before removing any existing materialized files.
@@ -63,10 +63,31 @@ The new 200-frame run remains detection-only. The focused materialization tests 
 
 ## Next reviewable steps
 
-1. Audit original-resolution candidate eye detections with human labels; reject false second
-   eyes and establish anatomical identity for accepted points.
+1. Collect human eye labels on original-resolution frames and establish anatomical
+   identity for accepted points.
 2. Build a versioned set of verified bird-free negatives, separate from teacher silence.
 3. Implement and test the annotation-known mask through the installed Ultralytics data,
-   augmentation, assignment, and pose loss path. Restore a working torchvision install.
+   augmentation, assignment, and pose loss path; verify the trainer runtime.
 4. Prepare corrected CUB plus reviewed field blend, freeze independent evaluation, then run
    matched T0/T1 with run-scoped checkpoints and a training-run contract.
+
+## Full-resolution follow-up (2026-09-29)
+
+The largest embedded JPEGs from the three original RAW frames were reviewed without teacher
+marks. They measured 5392×3592 (`235880`), 3936×2624 (`19899`), and 5392×3592 (`205490`).
+Both doves in `235880`, the side-view bird in `19899`, and the dove in `205490` each show
+one visible eye. All four proposed two-observed-eye labels are rejected. No anatomical
+left/right eye label is approved from this pilot.
+
+The `19899` teacher record was generated from a 160×120 RAW thumbnail: the shared teacher
+decoder accepted Pillow's small RAW rendition before trying the full embedded JPEG. The
+decoder now extracts the full embedded JPEG first for RAW input; a real decode of this frame
+returns 3936×2624. This changes teacher inference input, so the 200-frame pilot counts are
+historical and must not be treated as a calibrated result. At this follow-up, the local pilot
+output and pool directories were absent from `data/`; a rerun needs a restored pool and a
+fresh output directory.
+
+The decoder regression failed before the change and passed after it. The focused RAW,
+materialization, and alignment suite passed (15 tests). No GPU teacher inference or T-series
+training was run in this follow-up. T0/T1 remain gated on reviewed eye labels, verified
+negatives, the partial-keypoint trainer hook, and an independent field-eye evaluator.

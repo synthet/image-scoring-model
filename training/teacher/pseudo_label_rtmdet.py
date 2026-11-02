@@ -93,17 +93,13 @@ def decode(path: str) -> Image.Image:
         return bake_orientation(img.convert("RGB"), path)
     except ImportError:
         p = Path(path)
-        try:
-            return ImageOps.exif_transpose(Image.open(path)).convert("RGB")
-        except OSError:
-            if p.suffix.lower() not in {".nef", ".nrw", ".arw", ".cr2", ".cr3", ".dng", ".orf", ".rw2"}:
-                raise
+        if p.suffix.lower() in {".nef", ".nrw", ".arw", ".cr2", ".cr3", ".dng", ".orf", ".rw2"}:
             from training.build_eye_dataset import extract_full_preview
 
             preview = extract_full_preview(p)
-            if preview is None:
-                raise
-            return ImageOps.exif_transpose(Image.open(BytesIO(preview[0]))).convert("RGB")
+            if preview is not None:
+                return ImageOps.exif_transpose(Image.open(BytesIO(preview[0]))).convert("RGB")
+        return ImageOps.exif_transpose(Image.open(path)).convert("RGB")
 
 
 def run_teacher(model, rgb: np.ndarray, device):
