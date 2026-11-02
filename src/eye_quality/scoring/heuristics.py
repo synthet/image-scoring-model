@@ -44,7 +44,57 @@ def compute_eye_metrics(gray: np.ndarray, crop_width_px: int) -> dict[str, float
         "size_factor": size_factor,
         "failure_type": exposure_failure,
         "laplacian_var": lap_var,
+        # Versioned alternative (model#8); reported only, the default score above is unchanged.
+        "sharpness_noise_corrected": noise_corrected_sharpness(arr),
     }
+
+
+# Noise-corrected Laplacian sharpness, ported from image-scoring-pipeline ``modules/focus_quality.py``
+# (the canonical statistic in the hub vision terms contract): Immerkaer's noise estimate taken per 32 px block
+# at the 10th percentile, and Laplacian variance with the ``20 * sigma^2`` white-noise contribution removed.
+_IMMERKAER = np.array([[1.0, -2.0, 1.0], [-2.0, 4.0, -2.0], [1.0, -2.0, 1.0]])
+_LAPLACIAN_NOISE_GAIN = 20.0
+_NOISE_BLOCK = 32
+_NOISE_PERCENTILE = 10.0
+
+
+def _convolve3(img: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+    if cv2 is not None:
+        return cv2.filter2D(img, -1, kernel, borderType=cv2.BORDER_REPLICATE)
+    out = np.zeros_like(img)
+    padded = np.pad(img, 1, mode="edge")
+    for dy in range(3):
+        for dx in range(3):
+            out += kernel[dy, dx] * padded[dy : dy + img.shape[0], dx : dx + img.shape[1]]
+    return out
+
+
+def estimate_noise_sigma(arr: np.ndarray, *, block: int = _NOISE_BLOCK, percentile: float = _NOISE_PERCENTILE) -> float:
+    """Sensor noise sigma (grey levels) by Immerkaer's method; whole-crop estimate when too small for blocks."""
+    gray = np.asarray(arr, dtype=np.float64)
+    if gray.ndim != 2 or gray.shape[0] < 3 or gray.shape[1] < 3:
+        return 0.0
+    response = np.abs(_convolve3(gray, _IMMERKAER))[1:-1, 1:-1]
+    scale = np.sqrt(np.pi / 2.0) / 6.0
+    n_by, n_bx = response.shape[0] // block, response.shape[1] // block
+    if n_by < 2 or n_bx < 2:
+        return float(response.mean() * scale)
+    tiles = response[: n_by * block, : n_bx * block].reshape(n_by, block, n_bx, block)
+    return float(np.percentile(tiles.mean(axis=(1, 3)), percentile) * scale)
+
+
+def noise_corrected_sharpness(arr: np.ndarray, noise_sigma: float | None = None) -> float:
+    """Laplacian variance minus the white-noise term; unbounded, comparable as a ratio within a burst."""
+    gray = np.asarray(arr, dtype=np.float64)
+    if gray.ndim != 2 or gray.size < 9:
+        return 0.0
+    if noise_sigma is None:
+        noise_sigma = estimate_noise_sigma(gray)
+    if cv2 is not None:
+        lap_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+    else:
+        lap_var = float(np.var(_convolve3(gray, np.array([[0.0, 1.0, 0.0], [1.0, -4.0, 1.0], [0.0, 1.0, 0.0]]))))
+    return max(0.0, lap_var - _LAPLACIAN_NOISE_GAIN * noise_sigma**2)
 
 
 def _as_uint8(arr: np.ndarray) -> np.ndarray:
