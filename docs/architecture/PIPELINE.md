@@ -41,7 +41,7 @@ Horizontal flip augmentation swaps indices `[0, 2, 1, 3, 5, 4]`.
 
 Detections are filtered by bounding-box confidence, area fraction, and per-keypoint confidence (`KeypointThresholds` in `src/eye_quality/localization/keypoint_schema.py`). The highest-confidence bird box is selected when multiple detections are returned. Each visible eye becomes an `EyeLocalization` with normalized bbox, visibility class, and head-width estimate for crop sizing.
 
-The pose model predicts a **full bird bounding box** alongside keypoints (supervised from CUB `bounding_boxes.txt` during training). That box is used for `subject_too_small` but is not yet exposed in the JSON API. The same box supports **padded subject crops for BioCLIP species ID** in the backend. See [BIRD_DETECTION.md](BIRD_DETECTION.md).
+The pose model predicts a **full bird bounding box** alongside keypoints (supervised from CUB `bounding_boxes.txt` during training). Localization uses the box internally; JSON exposes per-eye boxes. The summary's `subject_too_small` branch uses the selected eye's visibility or `size_factor < 0.4`, rather than directly testing the full bird box. Pipeline BioCLIP subject selection has its own localization/ownership contract. See [eye evidence as built](../specs/as-built/eye-evidence.md) and [BIRD_DETECTION.md](BIRD_DETECTION.md).
 
 ### 2. Eye cropping
 
@@ -65,7 +65,7 @@ OpenCV is used when available; NumPy fallbacks handle platforms where specific `
 
 ### 4. Aggregation
 
-`aggregate_eye_quality` selects the **best visible eye** (highest focus score among eyes above confidence and size gates), then produces the image-level `EyeQualitySummary`.
+`aggregate_eye_quality` excludes hidden, too-small and turned-away eyes, then selects by focus score and sharpness. Confidence is applied after selection: below 0.45 it suppresses failure labels and caps grade at 2 without changing focus. Partially visible and occluded eyes remain candidates. Exact formulas and precedence: [eye evidence as built](../specs/as-built/eye-evidence.md).
 
 **Focus score** fuses sharpness, clarity, and edge energy, scaled by size factor and noise penalty.
 

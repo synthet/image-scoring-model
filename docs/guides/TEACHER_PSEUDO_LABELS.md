@@ -49,7 +49,7 @@ python -m venv --system-site-packages /tmp/onnxenv && /tmp/onnxenv/bin/pip insta
 
 ```bash
 python -m training.teacher.select_pseudo_label_pool --out data/pseudo_rtmdet_v0/pool.json \
-  --exclude-cohort ../image-scoring-backend/docs/reports/detector-benchmark-2026-09/cohort.csv \
+  --exclude-cohort ../image-scoring-pipeline/docs/reports/detector-benchmark-2026-09/cohort.csv \
   --per-folder 5 --seed teacher-v0
 ```
 
@@ -117,7 +117,7 @@ Omit `--allow-pending-permission` when the private manifest records granted trai
 
 ## Eye teacher (T-series pose pseudo-labels)
 
-After Gate 0 passes, use the existing pool and a distinct pilot directory for audit. Pass a **local**
+After Gate 0 passes, restore or select a local pool and use a fresh pilot directory for audit. Pass a **local**
 proprietary ONNX path (never committed):
 
 ```bash
@@ -127,6 +127,6 @@ python -m training.teacher.pseudo_label_eye detect --pool data/pseudo_eye_v0/poo
 
 - Detection writes `teacher_eye_detections.jsonl` and preview cache.
 - Materialization excludes teacher-negative decisions and rejects candidate eye labels. A reviewed-eye import path is still needed. The earlier `data/pseudo_eye_v0/` has 13 legacy unverified negatives; do not use it for training.
-- The 200-frame pilot failed eye-label visual QA. See [pilot audit](../reports/eye-pose-t-series-pilot-audit-2026-09-28.md).
+- The 200-frame pilot failed eye-label visual QA. At least one RAW thumbnail input also makes its counts historical; rerun from a fresh output directory after restoring the pool. See [pilot audit](../reports/eye-pose-t-series-pilot-audit-2026-09-28.md).
 - Dataset YAML for the field slice alone: `training/configs/wildlife_bird_distill_v0.yaml`.
 - Hold the corrected-CUB blend and T1 training until reviewed eye/negative labels and the partial-loss trainer hook exist.

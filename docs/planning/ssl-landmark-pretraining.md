@@ -13,7 +13,7 @@ status: proposed
 
 > **Status:** proposal. No code yet. It complements
 > [eye-evidence-spec.md](../architecture/eye-evidence-spec.md) (MVP-2) and the backend's keypoint provider
-> ([image-scoring-backend#426](https://github.com/synthet/image-scoring-backend/issues/426)).
+> ([image-scoring-pipeline#426](https://github.com/synthet/image-scoring-pipeline/issues/426)).
 
 ## Why
 
@@ -65,7 +65,7 @@ ICCV 2021 ([arXiv:2006.14787](https://arxiv.org/abs/2006.14787)).
 
 **Why top-down.** Detection and keypoints are separate problems here. The backend cascade (YOLO →
 COCO → refine,
-[#408](https://github.com/synthet/image-scoring-backend/issues/408)) supplies the box, and this
+[#408](https://github.com/synthet/image-scoring-pipeline/issues/408)) supplies the box, and this
 model only places points inside a padded crop at 192–256 px. That fixes the coverage gap without
 retraining the keypoint model's detector, and matches the backend's region-crop design (#426).
 
@@ -139,4 +139,4 @@ Folder-grouped splits throughout. No folder appears in two splits.
 - [eye-evidence-spec.md](../architecture/eye-evidence-spec.md): MVP-2 goals (relative eye sharpness, facing, calibration)
 - [BIRD_DETECTION.md](../architecture/BIRD_DETECTION.md): detector gap and training priorities
 - `training/teacher/`: the RTMDet teacher, whose boxes also feed set U
-- Backend: [#408](https://github.com/synthet/image-scoring-backend/issues/408) cascade, [#426](https://github.com/synthet/image-scoring-backend/issues/426) keypoint provider, [#415](https://github.com/synthet/image-scoring-backend/issues/415) labelled bursts
+- Backend: [#408](https://github.com/synthet/image-scoring-pipeline/issues/408) cascade, [#426](https://github.com/synthet/image-scoring-pipeline/issues/426) keypoint provider, [#415](https://github.com/synthet/image-scoring-pipeline/issues/415) labelled bursts

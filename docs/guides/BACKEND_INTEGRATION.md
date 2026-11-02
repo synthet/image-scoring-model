@@ -1,7 +1,7 @@
 ---
 type: Guide
 title: Backend and gallery integration
-description: Phase-2 wiring of eye-quality into image-scoring-backend and gallery.
+description: Phase-2 wiring of eye-quality into image-scoring-pipeline and gallery.
 resource: guides/BACKEND_INTEGRATION.md
 tags: [docs, integration, guide]
 timestamp: 2026-07-26T00:00:00Z
@@ -10,7 +10,7 @@ okf_version: 0.1
 
 # Backend and gallery integration (phase 2)
 
-This document describes how to wire **eye-quality** into **image-scoring-backend** and **image-scoring-gallery** after the model repo MVP is stable. Canonical backend docs remain the source of truth — do not duplicate them here.
+This document describes how to wire **eye-quality** into **image-scoring-pipeline** and **image-scoring-gallery** after the model repo MVP is stable. Canonical backend docs remain the source of truth — do not duplicate them here.
 
 Related docs: [PIPELINE.md](../architecture/PIPELINE.md), [API_CONTRACT.md](../technical/API_CONTRACT.md), [TRAINING.md](TRAINING.md), [BIRD_DETECTION.md](../architecture/BIRD_DETECTION.md).
 
@@ -18,7 +18,7 @@ Related docs: [PIPELINE.md](../architecture/PIPELINE.md), [API_CONTRACT.md](../t
 
 - Install this package in the backend environment: `pip install -e /path/to/image-scoring-model`
 - Fine-tuned pose weights at `models/eye_pose_v0.pt` — download [synthet/eye-pose-v0](https://huggingface.co/synthet/eye-pose-v0/tree/main) or see [TRAINING.md](TRAINING.md)
-- Wildlife keyword gating (`wildlife`, `birds`, `animals`) similar to [bird_species](https://github.com/synthet/image-scoring-backend/blob/main/modules/bird_species.py)
+- Wildlife keyword gating (`wildlife`, `birds`, `animals`) similar to [bird_species](https://github.com/synthet/image-scoring-pipeline/blob/main/modules/bird_species.py)
 
 ## Backend checklist
 
