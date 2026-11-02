@@ -148,7 +148,8 @@ def _noise_penalty(arr: np.ndarray) -> float:
             return float(np.clip(high_freq / 25.0, 0.0, 1.0))
         except cv2.error:
             pass
-    padded = np.pad(gray, 1, mode="edge")
+    # Accumulate in float: adding uint8 neighbors wraps before division.
+    padded = np.pad(gray.astype(np.float64), 1, mode="edge")
     blurred = (
         padded[:-2, :-2]
         + padded[:-2, 1:-1]
