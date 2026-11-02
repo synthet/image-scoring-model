@@ -1,0 +1,29 @@
+# bird_pose_15: all 15 CUB-200-2011 parts (training/convert_cub200_bird15.py). Override `path` when training.
+path: data/cub_bird15
+
+train: images/train
+val: images/val
+
+kpt_shape: [15, 3]
+flip_idx: [0, 1, 2, 3, 4, 5, 10, 11, 12, 9, 6, 7, 8, 13, 14]
+
+names:
+  0: bird
+
+kpt_names:
+  0:
+    - back
+    - beak
+    - belly
+    - breast
+    - crown
+    - forehead
+    - left_eye
+    - left_leg
+    - left_wing
+    - nape
+    - right_eye
+    - right_leg
+    - right_wing
+    - tail
+    - throat
