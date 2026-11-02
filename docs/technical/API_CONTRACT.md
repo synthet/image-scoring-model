@@ -55,8 +55,8 @@ Serialize with `result.to_api_dict()` or `result.model_dump(mode="json")`.
 |-------|---------------|
 | `none` | No failure, or confidence too low to assert one |
 | `defocus` | Low sharpness with adequate size |
-| `motion_blur` | Directional blur pattern |
-| `subject_motion` | Combined motion indicators |
+| `motion_blur` | Focus < 0.20 after defocus precedence; direction is not measured |
+| `subject_motion` | Reserved enum; current heuristic does not assign it |
 | `noise` | High noise penalty |
 | `low_contrast` | Flat local contrast |
 | `overexposed` | Blown highlights in crop |
@@ -74,7 +74,7 @@ To access the bird box from the pose model, call `PoseLocalizer.predict()` direc
 
 ## `detect` command output
 
-Separate from `score` / `batch`. Produced by `eye-quality detect` / `BirdDetector` using `models/bird_detect_v0.pt` (single class `bird`).
+Separate from `score` / `batch`. `BirdDetector` resolves explicit weights first, otherwise `models/bird_detect_v1.pt`, then `bird_detect_v0.pt` (single class `bird`); missing both raises rather than using a generic COCO model. The v0 payload below is an example, not the default-resolution rule.
 
 ```json
 {
@@ -111,7 +111,7 @@ Boxes are sorted by confidence descending. Empty `birds` means no detection abov
 | `eye_side` | `"left"` \| `"right"` | |
 | `bbox_norm` | `[x, y, w, h]` | Normalized **eye** box in oriented image space |
 | `visibility` | string | see below |
-| `detection_confidence` | float | Keypoint + bbox confidence |
+| `detection_confidence` | float | Keypoint confidence, adjusted by visibility; not a bbox-confidence product |
 | `crop_path` | string \| `null` | Debug crop path when `--debug-dir` set |
 
 ### `visibility` values
@@ -162,3 +162,5 @@ Boxes are sorted by confidence descending. Empty `birds` means no detection abov
 ## Batch output
 
 `eye-quality batch` writes one JSON object per line (JSONL), each matching the structure above, with an added `path` field for the source image.
+
+Observed selection, failure precedence, geometry limits and tests are in [eye evidence as built](../specs/as-built/eye-evidence.md). These documentation corrections do not change the public JSON shape or ranges.

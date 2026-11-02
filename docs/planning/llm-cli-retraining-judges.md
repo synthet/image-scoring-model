@@ -15,7 +15,7 @@ Requested extension to the [recall-first retraining plan](bird-eye-retraining-20
 
 ## Existing workflow to reuse
 
-The local backend is `D:\Projects\image-scoring-backend`. Its [blind bbox-panel report](https://github.com/synthet/image-scoring-backend/blob/master/docs/reports/bbox-llm-judge-panel-2026-09-24.md) used Antigravity, Cursor, and a partial Claude Code run to grade 576 unique boxes. Vision-majority identified 106/112 boxes on owner-labelled bird-free frames as WRONG. That validates one presence-related subset; it does not establish 95% accuracy on box geometry, tiny birds, or eyes. Codex lacked quota in that run; availability must be checked anew.
+The local backend is `D:\Projects\image-scoring-pipeline`. Its [blind bbox-panel report](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/reports/bbox-llm-judge-panel-2026-09-24.md) used Antigravity, Cursor, and a partial Claude Code run to grade 576 unique boxes. Vision-majority identified 106/112 boxes on owner-labelled bird-free frames as WRONG. That validates one presence-related subset; it does not establish 95% accuracy on box geometry, tiny birds, or eyes. Codex lacked quota in that run; availability must be checked anew.
 
 The reusable compiled harness is in sibling `D:\Projects\image-scoring-skills`:
 
@@ -24,7 +24,7 @@ The reusable compiled harness is in sibling `D:\Projects\image-scoring-skills`:
 - `.cursor/scripts/merge-bird-crop-verdicts.ps1`: deterministic within-burst consensus and CSV update.
 - `prompts/burst-judge.md`: existing `best | good | reject` task.
 
-The backend's [labelling runbook](https://github.com/synthet/image-scoring-backend/blob/master/docs/guides/BIRD_CROP_LABELLING.md) defines agent-derived provenance. Its [prior run record](https://github.com/synthet/image-scoring-backend/blob/master/docs/reports/SESSION_BIRD_CROP_CLOSEOUT_2026-08-05.md) records an unreadable-sheet trust failure. These are useful precedents for image-access checks and explicit judge coverage.
+The backend's [labelling runbook](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/guides/BIRD_CROP_LABELLING.md) defines agent-derived provenance. Its [prior run record](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/reports/SESSION_BIRD_CROP_CLOSEOUT_2026-08-05.md) records an unreadable-sheet trust failure. These are useful precedents for image-access checks and explicit judge coverage.
 
 **Adapt the dispatch and provenance machinery; add a separate localization-review task.** The current harness is fixed to the old burst roster and writes its `label_set.csv`; it is not a drop-in detector/eye evaluator. Do not overwrite that study or resample its roster. Existing `-WhatIfSetup` is setup-only, but still creates work files; existing merge `-DryRun` creates a proposed CSV. Neither is a new localization-review mode.
 

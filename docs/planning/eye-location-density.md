@@ -91,5 +91,5 @@ On the #415 labelled bursts (and the #377 frames with owner eye checks):
 - [eye-evidence-spec.md](../architecture/eye-evidence-spec.md): head-relative eye sharpness, facing,
   separate evidence confidence
 - [ssl-landmark-pretraining.md](ssl-landmark-pretraining.md): the fine-tuning head this would sit on
-- Backend [#426](https://github.com/synthet/image-scoring-backend/issues/426): keypoint provider contract
+- Backend [#426](https://github.com/synthet/image-scoring-pipeline/issues/426): keypoint provider contract
   (additive fields: `sigma` or `cov` per keypoint)

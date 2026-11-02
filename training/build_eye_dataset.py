@@ -3,7 +3,7 @@
 
 Pipeline (MVP-2 data prep):
 
-  1. Query ``image-scoring-backend`` Postgres for images carrying a ``species:*``
+  1. Query ``image-scoring-pipeline`` Postgres for images carrying a ``species:*``
      keyword (i.e. bird images already identified by BioCLIP).
   2. Translate each stored WSL path (``/mnt/d/Photos/...``) to a Windows path and
      extract the **full-resolution** embedded JPEG preview from the NEF (Nikon
