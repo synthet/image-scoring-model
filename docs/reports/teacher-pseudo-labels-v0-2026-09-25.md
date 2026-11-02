@@ -176,10 +176,10 @@ keeps downloading v0 until its `bird_detection.model_file` is switched.
    pose model's detection stage and to the crop corpus in
    [ssl-landmark-pretraining.md](../planning/ssl-landmark-pretraining.md) (set U).
 3. Keep the teacher only as a labeller. Runtime detection stays with the student, or with the backend
-   cascade ([image-scoring-backend#408](https://github.com/synthet/image-scoring-backend/issues/408)).
+   cascade ([image-scoring-pipeline#408](https://github.com/synthet/image-scoring-pipeline/issues/408)).
 
 ## Related
 
 - [guides/TEACHER_PSEUDO_LABELS.md](../guides/TEACHER_PSEUDO_LABELS.md): how to rerun
 - [architecture/BIRD_DETECTION.md](../architecture/BIRD_DETECTION.md): detector gap and training priorities
-- Backend: [upstream weight identity report](https://github.com/synthet/image-scoring-backend/blob/master/docs/reports/upstream-weights-identity-2026-09-25.md), [#426](https://github.com/synthet/image-scoring-backend/issues/426) keypoint and mask providers
+- Backend: [upstream weight identity report](https://github.com/synthet/image-scoring-pipeline/blob/master/docs/reports/upstream-weights-identity-2026-09-25.md), [#426](https://github.com/synthet/image-scoring-pipeline/issues/426) keypoint and mask providers

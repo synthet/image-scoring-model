@@ -36,3 +36,7 @@ Agents and contributors must check this map before inventing API fields, score r
 **Rule:** code and the written contract must never disagree. If you change one, change the other in the same PR. Changing field names or score ranges in the API contract is a **human decision** (see [SAFETY.md](../.agent/SAFETY.md)).
 
 Redirect stubs at `docs/API_CONTRACT.md` (and siblings) exist only for old URLs — the living contract is under `technical/`.
+
+## As-built behavior (2026-10-23 review)
+
+[As-built specifications](specs/as-built/INDEX.md) bind implementation observations to source revisions and regression tests. Existing API/schema contracts remain authoritative; the specs identify discrepancies and evaluation gaps without silently changing intended requirements.

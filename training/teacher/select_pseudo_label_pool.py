@@ -1,7 +1,7 @@
 """Select a stratified, read-only pool of library frames for RTMDet teacher pseudo-labelling.
 
     python -m training.teacher.select_pseudo_label_pool --out data/pseudo_rtmdet_v0/pool.json \
-        --exclude-cohort ../image-scoring-backend/docs/reports/detector-benchmark-2026-09/cohort.csv
+        --exclude-cohort ../image-scoring-pipeline/docs/reports/detector-benchmark-2026-09/cohort.csv
 
 Strata (the gaps the teacher is meant to fill):
   miss_birdkw  bird_detect_v0 found no box, but the image carries the `birds` keyword

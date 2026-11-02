@@ -47,6 +47,10 @@ okf_version: 0.1
 - [technical/INDEX.md](technical/INDEX.md)
 - [technical/API_CONTRACT.md](technical/API_CONTRACT.md) — JSON output schema
 
+## Specifications
+
+- [specs/INDEX.md](specs/INDEX.md) — implemented behavior and proposal navigation
+
 ## Agent workflow
 
 - [ai-workflow/README.md](ai-workflow/README.md) — asset map and SDLC loop

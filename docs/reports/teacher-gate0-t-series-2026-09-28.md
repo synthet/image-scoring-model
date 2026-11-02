@@ -55,4 +55,4 @@ and `training_use_permission.status`.
 ## References
 
 - [teacher-pseudo-labels-v0-2026-09-25.md](./teacher-pseudo-labels-v0-2026-09-25.md) — RTMDet v0 pseudo-label run
-- Backend upstream identity (public RTMDet only): image-scoring-backend `docs/reports/upstream-weights-identity-2026-09-25.md`
+- Backend upstream identity (public RTMDet only): image-scoring-pipeline `docs/reports/upstream-weights-identity-2026-09-25.md`
