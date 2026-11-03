@@ -95,15 +95,18 @@ class PoseLocalizer:
         thresholds: KeypointThresholds | None = None,
         crop_detector: Any = None,
         crop_pad: float = 0.25,
+        crop_conf: float | None = None,
     ) -> None:
         """``crop_detector`` (a ``BirdDetector``) switches on two-stage localization: pose runs on each
-        padded bird-box crop instead of the full frame, which finds far more small birds' eyes."""
+        padded bird-box crop instead of the full frame, which finds far more small birds' eyes.
+        ``crop_conf`` is the detector's own box threshold; ``None`` keeps the pose ``min_bbox_conf``."""
         self.weights = resolve_weights_path(weights)
         self.device = device
         self.imgsz = imgsz
         self.thresholds = thresholds or DEFAULT_THRESHOLDS
         self.crop_detector = crop_detector
         self.crop_pad = crop_pad
+        self.crop_conf = crop_conf
         self._model: Any = None
 
     def _load_model(self) -> Any:
@@ -179,12 +182,15 @@ class PoseLocalizer:
             img = ImageOps.exif_transpose(src).convert("RGB")
         width, height = img.size
         model = self._load_model()
-        kwargs: dict[str, Any] = {"imgsz": self.imgsz, "verbose": False, "max_det": 1}
+        # Several poses per crop: the padding can bring a neighbouring bird in, and _crop_pose_row keeps
+        # only the one that overlaps the detector box.
+        kwargs: dict[str, Any] = {"imgsz": self.imgsz, "verbose": False, "max_det": 5}
         if self.device:
             kwargs["device"] = self.device
+        conf = self.thresholds.min_bbox_conf if self.crop_conf is None else self.crop_conf
 
         detections: list[PoseDetection] = []
-        for box in self.crop_detector.predict(image_path, conf=self.thresholds.min_bbox_conf):
+        for box in self.crop_detector.predict(image_path, conf=conf):
             x1, y1, x2, y2 = box.bbox_xyxy
             pad_x, pad_y = self.crop_pad * (x2 - x1), self.crop_pad * (y2 - y1)
             cx1, cy1 = max(0, round(x1 - pad_x)), max(0, round(y1 - pad_y))
@@ -200,8 +206,8 @@ class PoseLocalizer:
             if det.bbox_area_frac < self.thresholds.min_bbox_area_frac:
                 continue
             results = model.predict(img.crop((cx1, cy1, cx2, cy2)), **kwargs)
-            if results and results[0].keypoints is not None and len(results[0].keypoints.data):
-                row = np.array(results[0].keypoints.data[0].cpu().numpy(), dtype=np.float64)
+            row = _crop_pose_row(results, (x1 - cx1, y1 - cy1, x2 - cx1, y2 - cy1))
+            if row is not None:
                 row[:, 0] += cx1
                 row[:, 1] += cy1
                 det.keypoints = self._parse_keypoints(row)
@@ -209,6 +215,14 @@ class PoseLocalizer:
 
         detections.sort(key=lambda d: d.bbox_confidence, reverse=True)
         return detections
+
+    def _has_eye(self, det: PoseDetection) -> bool:
+        """True when the detection carries an eye keypoint at or above ``min_kpt_conf``.
+
+        Two-stage keeps detector boxes whose crop got no pose, so the most confident box is not always a bird.
+        """
+        eye_names = {KEYPOINT_NAMES[idx] for idx in EYE_INDICES.values()}
+        return any(kp.name in eye_names and kp.confidence >= self.thresholds.min_kpt_conf for kp in det.keypoints)
 
     def _parse_keypoints(self, row: np.ndarray) -> list[PoseKeypoint]:
         points: list[PoseKeypoint] = []
@@ -241,6 +255,8 @@ class PoseLocalizer:
             return [], [], notes
 
         best = detections[0]
+        if self.crop_detector is not None:  # single-stage selection is unchanged
+            best = next((d for d in detections if self._has_eye(d)), best)
         kpt_map = {kp.name: kp for kp in best.keypoints}
         debug_kpts = [
             [kpt_map[name].x, kpt_map[name].y, kpt_map[name].confidence]
@@ -362,3 +378,35 @@ class PoseLocalizer:
         if conf >= self.thresholds.low_confidence_threshold:
             return EyeVisibility.VISIBLE, conf
         return EyeVisibility.PARTIALLY_VISIBLE, conf
+
+
+def _iou(a: tuple[float, ...], b: tuple[float, ...]) -> float:
+    ix = max(0.0, min(a[2], b[2]) - max(a[0], b[0]))
+    iy = max(0.0, min(a[3], b[3]) - max(a[1], b[1]))
+    inter = ix * iy
+    union = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
+    return inter / union if union > 0 else 0.0
+
+
+def _crop_pose_row(results: Any, target: tuple[float, float, float, float]) -> np.ndarray | None:
+    """Keypoint row of the crop pose that belongs to the detector box (``target``, crop pixels).
+
+    Highest IoU with the box wins, then pose confidence; a pose that does not overlap the box is never
+    used. Same rule as the pipeline's ``modules/keypoints.select_detection``.
+    """
+    if not results or results[0].keypoints is None or not len(results[0].keypoints.data):
+        return None
+    boxes = results[0].boxes
+    xyxy = np.asarray(boxes.xyxy.cpu().numpy(), dtype=np.float64).reshape(-1, 4)
+    confs = np.asarray(boxes.conf.cpu().numpy(), dtype=np.float64).reshape(-1)
+    best, best_key = None, None
+    for i, box in enumerate(xyxy):
+        iou = _iou(tuple(box), target)
+        if iou <= 0.0:
+            continue
+        key = (round(iou, 6), float(confs[i]))
+        if best_key is None or key > best_key:
+            best, best_key = i, key
+    if best is None:
+        return None
+    return np.array(results[0].keypoints.data[best].cpu().numpy(), dtype=np.float64)
