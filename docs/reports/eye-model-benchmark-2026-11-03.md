@@ -157,7 +157,46 @@ Not compared: the external mammal-eye model (no bird keypoints) and the base `yo
 11. **CUB is not a proxy for library performance.** The gap is about 0.45 within 5% for the current full-frame models. CUB birds are large, centred and well lit.
 12. **`verified_negatives_v1` checks out.** None of the 27 sampled frames contains a bird; the 13 with labelled subjects hold insects, lizards, a frog, figurines, a deer and a person.
 13. **Older-body RAW decoding:** the shared preview extractor (`training/build_eye_dataset.py`) found no embedded JPEG in 33 of 423 sampled NEFs: 23 from the D90, 7 Z6ii and 1 D300. The fallback then failed. Older bodies are under-sampled here, and any tool using that decoder skips those files.
-14. **Eye-state heads were not evaluated:** no labelled eye was tagged closed.
+14. **Eye-state heads were not evaluated:** no test-sample eye was tagged closed, and the calibration sample has only 2.
+15. **Requiring a second detector to agree removes bird-free false eyes.** It costs recall and speed and needs an eye-threshold rule that also penalises hidden sides; see the calibration section.
+16. **`verified_negatives_v1` has at least one error:** one of the 26 calibration frames drawn from it contains a bird.
+
+## Detector calibration (follow-up, same day)
+
+**Calibration set (`data/field_eye_calib_v1`):**
+- 108 frames that the detectors flagged as containing a bird, plus 26 verified no-bird frames.
+- Seed `field-eye-calib-v1`, drawn with `--exclude-manifest`, so it shares no folder and no file with the test sample.
+- The owner labelled **birds only**:
+  - 70 birds, 9 of them with hand-drawn boxes;
+  - eye slots: 60 visible, 62 hidden, 18 unresolvable; 2 tagged closed;
+  - only 55 of the 108 detector-flagged frames contain a bird;
+  - one frame from `verified_negatives_v1` does contain a bird, so that manifest has at least one error.
+
+**Method:** `eval_eye_benchmark run --calibrate`.
+- **Inputs:** two-stage predictions from `topdown` with `agree=rtmdet`. Each `bird_detect_v1` box carries the best tiled-RTMDet bird score among overlapping boxes (IoU ≥ 0.3).
+- **Grid:** detector confidence 0.25–0.75 × agreement 0.0–0.8, with the eye threshold re-chosen per cell (Youden).
+- **Objective, fixed before looking:** PCK@0.05 minus the share of bird-free frames with a false eye.
+
+**Result:** both two-stage models choose **detector confidence ≥ 0.60 and RTMDet agreement ≥ 0.50**. The optimum lies inside the grid; agreement 0.60 is worse.
+
+| Calibration set, B_td | Within 5% | Birds found | No-bird frames with a false eye |
+|---|---|---|---|
+| Current default (conf 0.25, no agreement) | 0.68 | 0.77 | 0.71 |
+| Calibrated (conf 0.60, agreement ≥ 0.50) | 0.67 | 0.64 | 0.06 |
+
+**Frozen settings scored once on the test sample** (birds only):
+
+| Test set, B_td | Birds found | Within 2% | Within 5% | Frames with an eye found | False eyes on hidden | No-subject frames with a false eye | ms/img |
+|---|---|---|---|---|---|---|---|
+| Before calibration | 0.76 | 0.46 | 0.69 | 0.91 | 0.02 | 0.19 | 83 |
+| Calibrated | 0.63 | 0.49 | 0.69 | 0.80 | 0.19 | **0.00** | ~770 |
+
+**What the calibration shows:**
+- **The agreement rule works:** false eyes on bird-free frames went to zero on held-out data, with eye placement unchanged.
+- **Detection cost:** about 12 points of bird recall.
+- **Hidden-side cost:** the calibrated eye threshold is near zero (0.037; 0.057 for A_td), because the objective did not penalise false eyes on hidden sides. On the test set those rose from 0.02 to 0.19. The objective was not changed after seeing the test numbers. The next calibration should add a hidden-side term, decided in advance and re-run on fresh calibration data.
+- **Speed cost:** tiled RTMDet makes two-stage about 10× slower (about 0.8 s per 2048 px image on the RTX 4060). A cheaper second check, such as a single untiled RTMDet pass on the box crop, should be tested before production use.
+- **Not yet in production:** the agreement rule exists only in the benchmark (`topdown,agree=rtmdet`, `--agree-min`). `PoseLocalizer --two-stage` still uses `bird_detect_v1` alone at confidence 0.25.
 
 ## Pros and cons
 
@@ -178,7 +217,7 @@ Not compared: the external mammal-eye model (no bird keypoints) and the base `yo
 | # | Change | Evidence | Status |
 |---|---|---|---|
 | 1 | Two-stage localization | Library within 5%: 0.49 → 0.67 (production path); small birds 0.35 → 0.71 | Opt-in in PR #24; off by default |
-| 2 | Calibrate the detector before two-stage becomes the default; test an RTMDet-agreement rule | Single-detector `bird_detect_v1` boxes were 89% false; no-subject false eyes 0.14 → 0.33 with two-stage | Calibration sample `data/field_eye_calib_v1` being built, excluding every test folder and file |
+| 2 | Calibrate the detector before two-stage becomes the default; test an RTMDet-agreement rule | Single-detector `bird_detect_v1` boxes were 89% false; no-subject false eyes 0.14 → 0.33 with two-stage | Calibrated: conf ≥ 0.60 + RTMDet agreement ≥ 0.50 takes bird-free false eyes to 0 on the test set. Open: hidden-side false eyes (0.19), 10× latency, production wiring |
 | 3 | Make `bird_pose_15_v0` the eye model | Best placement on both datasets; better visibility separation on CUB | Owner decision; needs a mapping from its parts (6 and 10) into the 6-point schema |
 | 4 | Fine-tune on library-domain heads: owls, frontal heads, low light | Failure frames in the private report | Needs a separately labelled set; the 147-frame sample stays a test set |
 | 5 | Learned visibility and eye state instead of thresholds | Library visible-vs-hidden AUROC 0.58–0.81 | Design work |
