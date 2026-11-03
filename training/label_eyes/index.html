@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eye labels</title>
+<style>
+  :root { --bg:#111; --panel:#1b1b1b; --text:#e8e8e8; --muted:#9a9a9a; --box:#3fa9f5; --sel:#ffd23f;
+          --eye:#ff4d6d; --hidden:#9a9a9a; --ok:#4cd17a; --warn:#ff9f43; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui, sans-serif;
+         display:grid; grid-template-columns:1fr 320px; height:100vh; overflow:hidden; }
+  #stage { position:relative; overflow:hidden; cursor:crosshair; }
+  canvas { display:block; }
+  aside { background:var(--panel); padding:12px 14px; overflow-y:auto; border-left:1px solid #2a2a2a; }
+  h1 { font-size:15px; margin:0 0 6px; }
+  .muted { color:var(--muted); }
+  .bird { border:1px solid #333; border-radius:6px; padding:6px 8px; margin:6px 0; cursor:pointer; }
+  .bird.sel { border-color:var(--sel); }
+  .slot { display:inline-block; margin-right:10px; }
+  kbd { background:#2a2a2a; border:1px solid #3a3a3a; border-radius:3px; padding:0 4px; font-size:12px; }
+  #status { margin:8px 0; min-height:20px; }
+  .ok { color:var(--ok); } .warn { color:var(--warn); }
+  button { background:#2a2a2a; color:var(--text); border:1px solid #444; border-radius:4px; padding:4px 8px;
+           cursor:pointer; margin:2px 2px 2px 0; }
+  ul { padding-left:18px; margin:6px 0; }
+  li { margin:2px 0; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="cv"></canvas></div>
+<aside>
+  <h1 id="title">Loading…</h1>
+  <div id="meta" class="muted"></div>
+  <div id="progress" class="muted"></div>
+  <div id="status"></div>
+  <div id="birds"></div>
+  <div>
+    <button id="prev">◀ Prev <kbd>P</kbd></button>
+    <button id="save">Save &amp; next <kbd>Enter</kbd></button>
+    <button id="nextUnlabelled">Next unlabelled <kbd>U</kbd></button>
+  </div>
+  <h1 style="margin-top:14px">How to label</h1>
+  <ul class="muted">
+    <li>Every bird needs a box. Detector boxes are pre-filled; check them.</li>
+    <li>Click a box (or its row) to select the bird. The yellow box is selected.</li>
+    <li>Click on the image to place a <b>visible</b> eye for the selected bird (order doesn't matter, max 2).</li>
+    <li><kbd>H</kbd> next empty eye slot = hidden (turned away / covered). <kbd>R</kbd> = unresolvable
+      (can't see at this size). <kbd>K</kbd> = unknown.</li>
+    <li><kbd>C</kbd> toggle "closed" on the selected bird's visible eyes.</li>
+    <li><kbd>Z</kbd> undo last eye on the selected bird. <kbd>Del</kbd> delete the selected box.</li>
+    <li><kbd>B</kbd> then drag: draw a new bird box.</li>
+    <li><kbd>X</kbd> no bird in this frame (removes all boxes). <kbd>E</kbd> exclude frame (can't judge).</li>
+    <li>Wheel = zoom at cursor. Right-drag or Space+drag = pan. <kbd>0</kbd> = fit.</li>
+    <li><kbd>Tab</kbd> select next bird.</li>
+  </ul>
+</aside>
+<script>
+"use strict";
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d"), stage = document.getElementById("stage");
+let images = [], labels = {}, idx = 0, img = new Image(), view = {s:1, x:0, y:0};
+let state = null, sel = 0, drawing = null, boxMode = false, panning = null, space = false;
+
+function blankEyes() { return [{state:null}, {state:null}]; }
+function fromManifest(m) {
+  const W = m.width, H = m.height;
+  return { excluded:false, birds: m.detector_boxes.map((b, i) => ({
+    id:`bird-${i+1}`, source:"detector", bbox:[b.box[0]*W, b.box[1]*H, b.box[2]*W, b.box[3]*H], eyes: blankEyes() })) };
+}
+function cur() { return images[idx]; }
+
+async function init() {
+  const r = await fetch("/api/manifest"); const d = await r.json();
+  images = d.images; labels = d.labels;
+  const first = images.findIndex(m => !labels[m.image_id]);
+  load(first < 0 ? 0 : first);
+}
+function load(i) {
+  idx = Math.max(0, Math.min(images.length - 1, i));
+  const m = cur(), saved = labels[m.image_id];
+  state = saved ? JSON.parse(JSON.stringify({excluded:!!saved.excluded, birds:saved.birds || []})) : fromManifest(m);
+  sel = 0; boxMode = false; drawing = null;
+  img = new Image(); img.onload = () => { fit(); render(); }; img.src = `/img/${m.image_id}`;
+  render();
+}
+function fit() {
+  cv.width = stage.clientWidth; cv.height = stage.clientHeight;
+  const s = Math.min(cv.width / img.width, cv.height / img.height);
+  view = {s, x:(cv.width - img.width*s)/2, y:(cv.height - img.height*s)/2};
+}
+function toImg(e) { const r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left - view.x)/view.s, (e.clientY - r.top - view.y)/view.s]; }
+
+function render() {
+  const m = cur(); if (!m) return;
+  ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle = "#111"; ctx.fillRect(0,0,cv.width,cv.height);
+  if (img.complete && img.width) {
+    ctx.setTransform(view.s,0,0,view.s,view.x,view.y); ctx.drawImage(img, 0, 0);
+    const lw = 2/view.s;
+    state.birds.forEach((b, i) => {
+      ctx.strokeStyle = i === sel ? getCss("--sel") : getCss("--box"); ctx.lineWidth = lw*(i===sel?1.5:1);
+      ctx.strokeRect(b.bbox[0], b.bbox[1], b.bbox[2]-b.bbox[0], b.bbox[3]-b.bbox[1]);
+      ctx.fillStyle = ctx.strokeStyle; ctx.font = `${14/view.s}px system-ui`;
+      ctx.fillText(String(i+1), b.bbox[0] + 3/view.s, b.bbox[1] + 15/view.s);
+      b.eyes.forEach(e => { if (e.state !== "visible") return;
+        const r = 6/view.s; ctx.strokeStyle = getCss("--eye"); ctx.lineWidth = lw;
+        ctx.beginPath(); ctx.arc(e.x, e.y, r, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(e.x - 2*r, e.y); ctx.lineTo(e.x - r, e.y); ctx.moveTo(e.x + r, e.y);
+        ctx.lineTo(e.x + 2*r, e.y); ctx.moveTo(e.x, e.y - 2*r); ctx.lineTo(e.x, e.y - r); ctx.moveTo(e.x, e.y + r);
+        ctx.lineTo(e.x, e.y + 2*r); ctx.stroke();
+        if (e.closed) { ctx.fillStyle = getCss("--eye"); ctx.fillText("c", e.x + r, e.y - r); } });
+    });
+    if (drawing) { ctx.strokeStyle = getCss("--sel"); ctx.setLineDash([6/view.s, 4/view.s]);
+      ctx.strokeRect(drawing.x0, drawing.y0, drawing.x1 - drawing.x0, drawing.y1 - drawing.y0); ctx.setLineDash([]); }
+  }
+  document.getElementById("title").textContent = `${m.image_id} (${idx+1}/${images.length})`;
+  document.getElementById("meta").textContent =
+    `${m.kind === "bird" ? "bird frame" : "verified no-bird frame"} · ${m.body} · ${m.year}` +
+    (m.size_stratum ? ` · ${m.size_stratum}` : "") + (boxMode ? " · BOX MODE: drag to draw" : "");
+  const n = images.filter(x => labels[x.image_id]).length;
+  document.getElementById("progress").textContent = `${n} of ${images.length} labelled`;
+  const el = document.getElementById("birds");
+  if (state.excluded) { el.innerHTML = `<div class="warn">Frame excluded (press E again to undo)</div>`; return; }
+  if (!state.birds.length) { el.innerHTML = `<div class="muted">No birds in this frame.</div>`; return; }
+  el.innerHTML = state.birds.map((b, i) => `<div class="bird ${i===sel?"sel":""}" data-i="${i}">
+    <b>Bird ${i+1}</b> <span class="muted">(${b.source})</span><br>` +
+    b.eyes.map((e, k) => `<span class="slot">eye ${k+1}: ${e.state ? e.state + (e.closed ? " (closed)" : "") :
+      '<span class="warn">—</span>'}</span>`).join("") + `</div>`).join("");
+  el.querySelectorAll(".bird").forEach(d => d.onclick = () => { sel = +d.dataset.i; render(); });
+}
+function getCss(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function status(msg, cls) { const s = document.getElementById("status"); s.textContent = msg; s.className = cls || ""; }
+
+function setNextSlot(st, pt) {
+  const b = state.birds[sel]; if (!b) { status("Select or draw a bird box first.", "warn"); return; }
+  const slot = b.eyes.findIndex(e => !e.state);
+  if (slot < 0) { status("Both eye slots are filled; Z to undo.", "warn"); return; }
+  b.eyes[slot] = pt ? {state:"visible", x:Math.round(pt[0]*10)/10, y:Math.round(pt[1]*10)/10} : {state:st};
+  render();
+}
+function undoEye() { const b = state.birds[sel]; if (!b) return;
+  for (let k = 1; k >= 0; k--) if (b.eyes[k].state) { b.eyes[k] = {state:null}; break; } render(); }
+
+async function save(advance) {
+  const m = cur();
+  if (!state.excluded) for (const [i, b] of state.birds.entries())
+    if (b.eyes.some(e => !e.state)) { sel = i; render(); status(`Bird ${i+1}: fill both eye slots first.`, "warn"); return false; }
+  const row = { image_id:m.image_id, rendition_sha256:m.rendition_sha256, excluded:state.excluded,
+    birds: state.excluded ? [] : state.birds.map(b => ({ id:b.id, source:b.source,
+      bbox:b.bbox.map(v => Math.round(Math.max(0, v)*10)/10), eyes:b.eyes })) };
+  row.birds.forEach(b => { b.bbox[2] = Math.min(b.bbox[2], m.width); b.bbox[3] = Math.min(b.bbox[3], m.height); });
+  const r = await fetch("/api/label", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(row)});
+  const d = await r.json();
+  if (!r.ok) { status(`Not saved: ${d.error}`, "warn"); return false; }
+  labels[m.image_id] = row; status(`Saved ${m.image_id} (${d.labelled} labelled)`, "ok");
+  if (advance) load(idx + 1);
+  return true;
+}
+
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("mousedown", e => {
+  if (e.button === 2 || space) { panning = {x:e.clientX, y:e.clientY, vx:view.x, vy:view.y}; return; }
+  const p = toImg(e);
+  if (boxMode) { drawing = {x0:p[0], y0:p[1], x1:p[0], y1:p[1]}; return; }
+  const hit = state.birds.map((b, i) => [i, b]).filter(([, b]) =>
+    p[0] >= b.bbox[0] && p[0] <= b.bbox[2] && p[1] >= b.bbox[1] && p[1] <= b.bbox[3]);
+  const b = state.birds[sel];
+  const insideSel = b && p[0] >= b.bbox[0] && p[0] <= b.bbox[2] && p[1] >= b.bbox[1] && p[1] <= b.bbox[3];
+  if (!insideSel && hit.length) { sel = hit[hit.length - 1][0]; render(); return; }
+  if (state.excluded) return;
+  setNextSlot("visible", p);
+});
+window.addEventListener("mousemove", e => {
+  if (panning) { view.x = panning.vx + e.clientX - panning.x; view.y = panning.vy + e.clientY - panning.y; render(); }
+  else if (drawing) { const p = toImg(e); drawing.x1 = p[0]; drawing.y1 = p[1]; render(); }
+});
+window.addEventListener("mouseup", () => {
+  if (panning) { panning = null; return; }
+  if (drawing) {
+    const x0 = Math.min(drawing.x0, drawing.x1), x1 = Math.max(drawing.x0, drawing.x1);
+    const y0 = Math.min(drawing.y0, drawing.y1), y1 = Math.max(drawing.y0, drawing.y1);
+    drawing = null; boxMode = false;
+    if (x1 - x0 > 3 && y1 - y0 > 3) {
+      state.birds.push({id:`bird-${state.birds.length + 1}-h`, source:"human", bbox:[x0, y0, x1, y1], eyes:blankEyes()});
+      sel = state.birds.length - 1; state.excluded = false;
+    }
+    render();
+  }
+});
+cv.addEventListener("wheel", e => {
+  e.preventDefault(); const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const f = e.deltaY < 0 ? 1.2 : 1/1.2; view.x = mx - (mx - view.x)*f; view.y = my - (my - view.y)*f; view.s *= f; render();
+}, {passive:false});
+window.addEventListener("keydown", e => {
+  if (e.key === " ") { space = true; e.preventDefault(); return; }
+  const k = e.key.toLowerCase();
+  if (k === "enter") { save(true); }
+  else if (k === "p") { load(idx - 1); }
+  else if (k === "u") { const n = images.findIndex((m, i) => i > idx && !labels[m.image_id]); if (n >= 0) load(n); }
+  else if (k === "h") setNextSlot("hidden");
+  else if (k === "r") setNextSlot("unresolvable");
+  else if (k === "k") setNextSlot("unknown");
+  else if (k === "z") undoEye();
+  else if (k === "c") { const b = state.birds[sel]; if (b) { const v = b.eyes.filter(x => x.state === "visible");
+      const on = !v.every(x => x.closed); v.forEach(x => { x.closed = on; }); render(); } }
+  else if (k === "delete" || k === "backspace") { if (state.birds[sel]) { state.birds.splice(sel, 1); sel = 0; render(); } }
+  else if (k === "b") { boxMode = true; render(); }
+  else if (k === "x") { state.birds = []; state.excluded = false; render(); }
+  else if (k === "e") { state.excluded = !state.excluded; render(); }
+  else if (k === "0") { fit(); render(); }
+  else if (k === "tab") { e.preventDefault(); if (state.birds.length) { sel = (sel + 1) % state.birds.length; render(); } }
+});
+window.addEventListener("keyup", e => { if (e.key === " ") space = false; });
+window.addEventListener("resize", () => { fit(); render(); });
+document.getElementById("prev").onclick = () => load(idx - 1);
+document.getElementById("save").onclick = () => save(true);
+document.getElementById("nextUnlabelled").onclick = () => {
+  const n = images.findIndex((m, i) => i > idx && !labels[m.image_id]); if (n >= 0) load(n); };
+init();
+</script>
+</body>
+</html>
