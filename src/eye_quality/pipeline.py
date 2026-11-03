@@ -29,9 +29,24 @@ class PipelineConfig:
     debug_dir: str | Path | None = None
     model_name: str = "eye_quality_heuristic"
     model_version: str = "0.1.0"
+    two_stage: bool = False  # bird detector box -> pose on the padded crop (better for small birds)
+    detect_weights: str = ""
 
     def resolved_weights(self) -> str:
         return resolve_weights_path(self.weights or None)
+
+    def make_localizer(self) -> PoseLocalizer:
+        crop_detector = None
+        if self.two_stage:
+            from eye_quality.localization.bird_detector import BirdDetector
+
+            crop_detector = BirdDetector(weights=self.detect_weights or None, device=self.device)
+        return PoseLocalizer(
+            weights=self.resolved_weights(),
+            device=self.device,
+            imgsz=self.imgsz,
+            crop_detector=crop_detector,
+        )
 
 
 def score_image(
@@ -56,11 +71,7 @@ def score_image(
             str(image_path), oriented.width, oriented.height
         )
     else:
-        loc = localizer or PoseLocalizer(
-            weights=config.resolved_weights(),
-            device=config.device,
-            imgsz=config.imgsz,
-        )
+        loc = localizer or config.make_localizer()
         localizations, debug_kpts, notes = loc.localize_eyes(
             image_path, oriented.width, oriented.height
         )

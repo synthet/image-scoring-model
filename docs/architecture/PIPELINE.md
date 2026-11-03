@@ -41,6 +41,8 @@ Horizontal flip augmentation swaps indices `[0, 2, 1, 3, 5, 4]`.
 
 Detections are filtered by bounding-box confidence, area fraction, and per-keypoint confidence (`KeypointThresholds` in `src/eye_quality/localization/keypoint_schema.py`). The highest-confidence bird box is selected when multiple detections are returned. Each visible eye becomes an `EyeLocalization` with normalized bbox, visibility class, and head-width estimate for crop sizing.
 
+**Optional two-stage localization** (`--two-stage`, `PipelineConfig(two_stage=True)`; off by default) runs the bird detector first (`models/bird_detect_v1.pt`, or `--detect-weights`), then the pose model on each detection box padded by 25%, and maps the keypoints back to the frame. On the owner-labelled library sample it raised eyes within 5% of the bird-box diagonal from 0.49 to 0.67, and for small birds from 0.35 to 0.71. Frames without a subject get more false eyes (0.14 to 0.33), because detector false positives carry through, and latency is about double. The numbers come from the eye model benchmark (`docs/reports/eye-model-benchmark-2026-11-03.md`). The output schema is unchanged.
+
 The pose model predicts a **full bird bounding box** alongside keypoints (supervised from CUB `bounding_boxes.txt` during training). Localization uses the box internally; JSON exposes per-eye boxes. The summary's `subject_too_small` branch uses the selected eye's visibility or `size_factor < 0.4`, rather than directly testing the full bird box. Pipeline BioCLIP subject selection has its own localization/ownership contract. See [eye evidence as built](../specs/as-built/eye-evidence.md) and [BIRD_DETECTION.md](BIRD_DETECTION.md).
 
 ### 2. Eye cropping
@@ -100,8 +102,8 @@ payload = result.to_api_dict()
 ## CLI
 
 ```bash
-eye-quality score path/to/image.jpg [--weights PATH] [--debug-dir DIR] [--output out.json]
-eye-quality batch manifest.jsonl --output results.jsonl
+eye-quality score path/to/image.jpg [--weights PATH] [--two-stage [--detect-weights PATH]] [--debug-dir DIR] [--output out.json]
+eye-quality batch manifest.jsonl --output results.jsonl [--two-stage]
 ```
 
 Manifest format: one JSON object per line with a `path` field pointing to an image file.

@@ -93,11 +93,17 @@ class PoseLocalizer:
         device: str | None = None,
         imgsz: int = 640,
         thresholds: KeypointThresholds | None = None,
+        crop_detector: Any = None,
+        crop_pad: float = 0.25,
     ) -> None:
+        """``crop_detector`` (a ``BirdDetector``) switches on two-stage localization: pose runs on each
+        padded bird-box crop instead of the full frame, which finds far more small birds' eyes."""
         self.weights = resolve_weights_path(weights)
         self.device = device
         self.imgsz = imgsz
         self.thresholds = thresholds or DEFAULT_THRESHOLDS
+        self.crop_detector = crop_detector
+        self.crop_pad = crop_pad
         self._model: Any = None
 
     def _load_model(self) -> Any:
@@ -113,6 +119,8 @@ class PoseLocalizer:
         """Run pose inference; returns detections in pixel coordinates."""
         from PIL import Image
 
+        if self.crop_detector is not None:
+            return self._predict_on_crops(image_path)
         image_path = Path(image_path)
         with Image.open(image_path) as img:
             img = img.convert("RGB")
@@ -154,6 +162,49 @@ class PoseLocalizer:
                 det.keypoints = self._parse_keypoints(kpts[i])
             if det.bbox_area_frac < self.thresholds.min_bbox_area_frac:
                 continue
+            detections.append(det)
+
+        detections.sort(key=lambda d: d.bbox_confidence, reverse=True)
+        return detections
+
+    def _predict_on_crops(self, image_path: str | Path) -> list[PoseDetection]:
+        """Two-stage: bird boxes from ``crop_detector``, then pose on each padded box crop, mapped back.
+
+        Crops come from the EXIF-oriented image, the same pixel frame the detector and the eye crops use.
+        """
+        from PIL import Image, ImageOps
+
+        image_path = Path(image_path)
+        with Image.open(image_path) as src:
+            img = ImageOps.exif_transpose(src).convert("RGB")
+        width, height = img.size
+        model = self._load_model()
+        kwargs: dict[str, Any] = {"imgsz": self.imgsz, "verbose": False, "max_det": 1}
+        if self.device:
+            kwargs["device"] = self.device
+
+        detections: list[PoseDetection] = []
+        for box in self.crop_detector.predict(image_path, conf=self.thresholds.min_bbox_conf):
+            x1, y1, x2, y2 = box.bbox_xyxy
+            pad_x, pad_y = self.crop_pad * (x2 - x1), self.crop_pad * (y2 - y1)
+            cx1, cy1 = max(0, round(x1 - pad_x)), max(0, round(y1 - pad_y))
+            cx2, cy2 = min(width, round(x2 + pad_x)), min(height, round(y2 + pad_y))
+            if cx2 - cx1 < 8 or cy2 - cy1 < 8:
+                continue
+            det = PoseDetection(
+                bbox_xyxy=(float(x1), float(y1), float(x2), float(y2)),
+                bbox_confidence=float(box.confidence),
+                image_width=width,
+                image_height=height,
+            )
+            if det.bbox_area_frac < self.thresholds.min_bbox_area_frac:
+                continue
+            results = model.predict(img.crop((cx1, cy1, cx2, cy2)), **kwargs)
+            if results and results[0].keypoints is not None and len(results[0].keypoints.data):
+                row = np.array(results[0].keypoints.data[0].cpu().numpy(), dtype=np.float64)
+                row[:, 0] += cx1
+                row[:, 1] += cy1
+                det.keypoints = self._parse_keypoints(row)
             detections.append(det)
 
         detections.sort(key=lambda d: d.bbox_confidence, reverse=True)
