@@ -146,6 +146,32 @@ def test_split_replay_matches_prepare_from_coco():
     assert val == set(keys[:30]) and len(val) == 30
 
 
+def test_agree_min_filters_only_detections_with_an_agreement_score():
+    f = frame([], kind="negative")
+    lone = det([0, 0, 10, 10], [(5, 5, 0.9, None)])
+    agreed = {**det([20, 20, 30, 30], [(25, 25, 0.9, None)]), "agree": 0.6}
+    weak = {**det([40, 40, 50, 50], [(45, 45, 0.9, None)]), "agree": 0.05}
+    r = frame_records(f, {"detections": [lone, agreed, weak]}, 0.5, 0.25, agree_min=0.3)
+    assert r["false_birds"] == 2  # the score-less detection and the agreed one survive; the weak one is dropped
+
+
+def test_calibrate_prefers_the_setting_that_removes_false_eyes():
+    from training.eval_eye_benchmark import calibrate
+
+    frames, preds = [], {}
+    for i in range(6):
+        fid = f"b{i}"
+        frames.append(frame([bird(BOX, [{"state": "visible", "x": 100, "y": 100}, {"state": "hidden"}])], image_id=fid))
+        preds[fid] = {"detections": [{**det(BOX, [(100, 101, 0.9, None)]), "agree": 0.8}]}
+    for i in range(6):
+        fid = f"n{i}"
+        frames.append(frame([], kind="negative", image_id=fid))
+        preds[fid] = {"detections": [{**det([0, 0, 50, 50], [(5, 5, 0.9, None)], conf=0.9), "agree": 0.0}]}
+    out = calibrate(frames, preds, [0.25, 0.5], [0.0, 0.3])
+    best = out["best"]
+    assert best["agree_min"] == 0.3 and best["negative_frames_with_false_eye"] == 0.0 and best["pck@0.05"] == 1.0
+
+
 def test_parse_model_spec():
     s = parse_model_spec("A=yolo,weights=models/x.pt,eyes=1:2")
     assert s == {"name": "A", "type": "yolo", "weights": "models/x.pt", "eyes": "1:2"}

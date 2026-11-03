@@ -160,9 +160,15 @@ def bbox_diag(b) -> float:
     return math.hypot(b[2] - b[0], b[3] - b[1])
 
 
-def frame_records(frame: dict, pred: dict, eye_conf: float, bird_conf: float, iou_thr: float = 0.3) -> dict:
-    """Per-frame outcome records consumed by aggregate()."""
-    dets = [d for d in pred.get("detections", []) if d["confidence"] >= bird_conf]
+def frame_records(frame: dict, pred: dict, eye_conf: float, bird_conf: float, iou_thr: float = 0.3,
+                  agree_min: float = 0.0) -> dict:
+    """Per-frame outcome records consumed by aggregate().
+
+    ``agree_min`` drops detections whose second-detector agreement score (``agree``) is lower; detections
+    without that field always pass.
+    """
+    dets = [d for d in pred.get("detections", [])
+            if d["confidence"] >= bird_conf and d.get("agree", 1.0) >= agree_min]
     gt = frame["birds"]
     rec = {"image_id": frame["image_id"], "kind": frame["kind"], "size_stratum": frame.get("size_stratum"),
            "body": frame.get("body"), "birds_gt": len(gt), "birds_found": 0, "false_birds": 0,
@@ -292,9 +298,10 @@ def bootstrap(recs: list[dict], n: int = 1000, seed: int = 0) -> dict:
     return out
 
 
-def choose_threshold(frames: list[dict], preds: dict[str, dict], bird_conf: float) -> float:
+def choose_threshold(frames: list[dict], preds: dict[str, dict], bird_conf: float, agree_min: float = 0.0) -> float:
     """Eye-confidence threshold maximising Youden's J (visible vs hidden) on a calibration set."""
-    pairs = [p for f in frames for p in frame_records(f, preds.get(f["image_id"], {}), 0.0, bird_conf)["hidden_scores"]]
+    pairs = [p for f in frames
+             for p in frame_records(f, preds.get(f["image_id"], {}), 0.0, bird_conf, agree_min=agree_min)["hidden_scores"]]
     pos = sorted(s for y, s in pairs if y == 1)
     neg = sorted(s for y, s in pairs if y == 0)
     if not pos or not neg:
@@ -457,14 +464,33 @@ class TopDownYoloAdapter:
         self.eyes = {"left": left, "right": right}
         self.pad = float(spec.get("pad", 0.25))
         self.imgsz = int(spec.get("imgsz", 640))
+        self.rtmdet = None
+        if spec.get("agree") == "rtmdet":
+            import torch
+
+            from training.teacher.rtmdet_tiny import load_upstream
+
+            self.rtmdet_device = "cuda" if torch.cuda.is_available() else "cpu"
+            self.rtmdet = load_upstream(spec.get("rtmdet_ckpt", "models/rtmdet_tiny_coco.pth")).to(self.rtmdet_device)
+
+    def _agreement(self, im) -> list[tuple[list[float], float]]:
+        """RTMDet (tiled) bird boxes with scores, in frame pixels."""
+        from training.teacher.pseudo_label_rtmdet import BIRD, detect
+
+        b, s, c, _, _ = detect(self.rtmdet, im, self.rtmdet_device)
+        return [([float(v) for v in box], float(sc)) for box, sc, cl in zip(b, s, c) if int(cl) == BIRD]
 
     def __call__(self, im, rgb, frame) -> dict:
         r = self.det.predict(im, conf=0.05, max_det=20, verbose=False, device=self.device)[0]
         dets = []
         if r.boxes is None:
             return {"detections": dets}
+        second = self._agreement(im) if self.rtmdet is not None else None
         for box, conf in zip(r.boxes.xyxy.cpu().numpy(), r.boxes.conf.cpu().numpy()):
             x1, y1, x2, y2 = (float(v) for v in box)
+            agree = None
+            if second is not None:
+                agree = max((sc for b2, sc in second if iou([x1, y1, x2, y2], b2) >= 0.3), default=0.0)
             px, py = self.pad * (x2 - x1), self.pad * (y2 - y1)
             cx1, cy1 = max(0, round(x1 - px)), max(0, round(y1 - py))
             cx2, cy2 = min(im.width, round(x2 + px)), min(im.height, round(y2 + py))
@@ -479,7 +505,10 @@ class TopDownYoloAdapter:
                 eyes = [{"x": cx1 + float(xy[k][0]), "y": cy1 + float(xy[k][1]),
                          "confidence": float(kc[k]) if kc is not None else 1.0, "side": side}
                         for side, k in self.eyes.items()]
-            dets.append({"bbox": [x1, y1, x2, y2], "confidence": float(conf), "eyes": eyes})
+            det = {"bbox": [x1, y1, x2, y2], "confidence": float(conf), "eyes": eyes}
+            if agree is not None:
+                det["agree"] = round(agree, 4)
+            dets.append(det)
         return {"detections": sorted(dets, key=lambda d: -d["confidence"])}
 
 
@@ -513,17 +542,19 @@ def run_models(frames: list[dict], specs: list[dict], out: Path, device) -> dict
     return {n: {"ms_per_image_median": round(1000 * sorted(t[1:] or t)[len(t[1:] or t) // 2], 1)} for n, t in timing.items()}
 
 
-def score(frames, specs, out: Path, thresholds: dict[str, float] | None, bird_conf: float, by: list[str]):
+def score(frames, specs, out: Path, thresholds: dict[str, float] | None, bird_conf: float, by: list[str],
+          agree_min: float = 0.0):
     result = {}
     for s in specs:
         preds = {p["image_id"]: p for p in _jsonl(out / f"{s['name']}.predictions.jsonl")}
         thr = (thresholds or {}).get(s["name"])
         calibrated = thr is None
         if calibrated:
-            thr = choose_threshold(frames, preds, bird_conf)
-        recs = [frame_records(f, preds.get(f["image_id"], {}), thr, bird_conf) for f in frames]
+            thr = choose_threshold(frames, preds, bird_conf, agree_min)
+        recs = [frame_records(f, preds.get(f["image_id"], {}), thr, bird_conf, agree_min=agree_min) for f in frames]
         # Localisation alone: every predicted eye counts, whatever its confidence (false-eye fields meaningless).
-        ungated = aggregate([frame_records(f, preds.get(f["image_id"], {}), 0.0, bird_conf) for f in frames])
+        ungated = aggregate([frame_records(f, preds.get(f["image_id"], {}), 0.0, bird_conf, agree_min=agree_min)
+                             for f in frames])
         entry = {"eye_conf": thr, "eye_conf_chosen_here": calibrated, "overall": aggregate(recs),
                  "ungated": {k: ungated[k] for k in ("pck@0.02", "pck@0.05", "pck@0.1", "median_error",
                                                      "frame_eye_hit_rate")},
@@ -536,6 +567,28 @@ def score(frames, specs, out: Path, thresholds: dict[str, float] | None, bird_co
             entry[f"by_{key}"] = {g: aggregate(v) for g, v in sorted(groups.items())}
         result[s["name"]] = entry
     return result
+
+
+CALIBRATION_OBJECTIVE = "pck@0.05 - negative_frames_with_false_eye"
+
+
+def calibrate(frames: list[dict], preds: dict[str, dict], bird_confs, agree_mins) -> dict:
+    """Grid over detector confidence x second-detector agreement; eye threshold re-chosen per cell (Youden).
+
+    Objective (fixed before looking at results): PCK@0.05 on labelled birds minus the share of bird-free
+    frames that get a false eye. Ties go to the stricter setting (higher agree_min, then higher bird_conf).
+    """
+    rows = []
+    for bc in bird_confs:
+        for am in agree_mins:
+            thr = choose_threshold(frames, preds, bc, am)
+            agg = aggregate([frame_records(f, preds.get(f["image_id"], {}), thr, bc, agree_min=am) for f in frames])
+            obj = (agg["pck@0.05"] or 0.0) - (agg["negative_frames_with_false_eye"] or 0.0)
+            rows.append({"bird_conf": bc, "agree_min": am, "eye_conf": thr, "objective": round(obj, 4),
+                         **{k: agg[k] for k in ("bird_recall", "pck@0.05", "frame_eye_hit_rate",
+                                                "negative_frames_with_false_eye", "false_eyes_on_hidden_rate")}})
+    best = max(rows, key=lambda r: (r["objective"], r["agree_min"], r["bird_conf"]))
+    return {"objective": CALIBRATION_OBJECTIVE, "grid": rows, "best": best}
 
 
 def markdown(metrics: dict) -> str:
@@ -571,9 +624,13 @@ def main() -> None:
     r.add_argument("--model", action="append", required=True)
     r.add_argument("--thresholds", help="metrics.json from a calibration run; reuse its eye_conf per model")
     r.add_argument("--bird-conf", type=float, default=0.25)
+    r.add_argument("--agree-min", type=float, default=0.0,
+                   help="Drop detections whose second-detector agreement score is lower (two-stage agree=rtmdet)")
     r.add_argument("--device", default="0")
     r.add_argument("--out", required=True)
     r.add_argument("--score-only", action="store_true", help="Reuse existing predictions in --out")
+    r.add_argument("--calibrate", action="store_true",
+                   help="Sweep detector confidence x agreement on this (calibration) set; writes calibration.json")
     a = ap.parse_args()
 
     specs = [parse_model_spec(s) for s in a.model]
@@ -611,8 +668,22 @@ def main() -> None:
     if a.thresholds:
         prior = json.loads(Path(a.thresholds).read_text(encoding="utf-8"))
         thresholds = {n: m["eye_conf"] for n, m in prior["models"].items()}
-    metrics = {"source": source, "frames": len(frames), "bird_conf": a.bird_conf, "timing": timing,
-               "models": score(frames, specs, out, thresholds, a.bird_conf, by)}
+    if a.calibrate:
+        grid_conf = [round(0.25 + 0.05 * i, 2) for i in range(11)]  # 0.25 .. 0.75
+        grid_agree = [round(0.1 * i, 1) for i in range(9)]  # 0.0 .. 0.8
+        cal = {}
+        for s in specs:
+            preds = {p["image_id"]: p for p in _jsonl(out / f"{s['name']}.predictions.jsonl")}
+            has_agree = any("agree" in d for p in preds.values() for d in p.get("detections", []))
+            cal[s["name"]] = calibrate(frames, preds, grid_conf, grid_agree if has_agree else [0.0])
+            b = cal[s["name"]]["best"]
+            print(f"{s['name']}: best bird_conf={b['bird_conf']} agree_min={b['agree_min']} eye_conf={b['eye_conf']} "
+                  f"objective={b['objective']} pck@0.05={b['pck@0.05']} neg_false_eye={b['negative_frames_with_false_eye']}")
+        (out / "calibration.json").write_text(json.dumps({"source": source, "frames": len(frames), "models": cal},
+                                                         indent=2), encoding="utf-8")
+        return
+    metrics = {"source": source, "frames": len(frames), "bird_conf": a.bird_conf, "agree_min": a.agree_min,
+               "timing": timing, "models": score(frames, specs, out, thresholds, a.bird_conf, by, a.agree_min)}
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     print(markdown(metrics))
 
