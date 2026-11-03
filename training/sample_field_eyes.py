@@ -80,6 +80,20 @@ def merge_boxes(boxes: list[dict], iou_thr: float = 0.5) -> list[dict]:
     return kept
 
 
+def excluded_by(manifests: list[str]) -> tuple[set[str], set[str]]:
+    """(folder group ids, lower-cased source paths) listed in earlier sample manifests."""
+    groups, sources = set(), set()
+    for m in manifests:
+        for line in Path(m).read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            if r.get("kind") == "bird" and r.get("group_id"):
+                groups.add(r["group_id"])
+            sources.add(str(Path(r["source_path"])).lower())
+    return groups, sources
+
+
 def area_frac(box: list[float]) -> float:
     return max(0.0, box[2] - box[0]) * max(0.0, box[3] - box[1])
 
@@ -154,6 +168,9 @@ def main() -> None:
     ap.add_argument("--birds", type=int, default=120, help="Bird frames, split evenly over size strata")
     ap.add_argument("--negatives", type=int, default=30)
     ap.add_argument("--negatives-manifest", default="data/verified_negatives_v1/manifest.jsonl")
+    ap.add_argument("--exclude-manifest", action="append", default=[],
+                    help="Earlier sample manifest (repeatable): skip its folders and source files, e.g. keep a "
+                         "calibration sample apart from a test sample")
     ap.add_argument("--seed", default="field-eye-v1")
     ap.add_argument("--long-edge", type=int, default=2048)
     ap.add_argument("--max-tries", type=int, default=4000)
@@ -171,15 +188,18 @@ def main() -> None:
     rng = random.Random(a.seed)
     bodies = [b.strip() for b in a.bodies.split(",") if b.strip()]
 
+    excluded_groups, excluded_sources = excluded_by(a.exclude_manifest)
+
     negatives = []
     neg_path = Path(a.negatives_manifest)
     if a.negatives and neg_path.is_file():
         rows = [json.loads(line) for line in neg_path.open(encoding="utf-8") if line.strip()]
-        rows = [r for r in rows if r.get("label") == "human_verified_no_bird"]
+        rows = [r for r in rows if r.get("label") == "human_verified_no_bird"
+                and str(Path(r["source_image_path"])).lower() not in excluded_sources]
         negatives = rng.sample(rows, min(a.negatives, len(rows)))
     neg_sources = {str(Path(r["source_image_path"])).lower() for r in negatives}
 
-    folders = leaf_folders(root, bodies)
+    folders = [f for f in leaf_folders(root, bodies) if f[1].relative_to(root).as_posix() not in excluded_groups]
     rng.shuffle(folders)
     by_body: dict[str, list] = {}
     for f in folders:
