@@ -22,6 +22,9 @@ def _build_parser() -> argparse.ArgumentParser:
     score_p.add_argument("--imgsz", type=int, default=640)
     score_p.add_argument("--debug-dir", type=str, default=None)
     score_p.add_argument("--output", type=str, default=None, help="Write JSON to file")
+    score_p.add_argument("--two-stage", action="store_true",
+                       help="Detect bird boxes first and run pose on each crop (better for small birds)")
+    score_p.add_argument("--detect-weights", type=str, default=None, help="Bird detector weights for --two-stage")
 
     batch_p = sub.add_parser("batch", help="Score images listed in a JSONL manifest")
     batch_p.add_argument("manifest", type=str, help="JSONL file with {\"path\": \"...\"} per line")
@@ -30,6 +33,9 @@ def _build_parser() -> argparse.ArgumentParser:
     batch_p.add_argument("--imgsz", type=int, default=640)
     batch_p.add_argument("--debug-dir", type=str, default=None)
     batch_p.add_argument("--output", type=str, required=True, help="Output JSONL path")
+    batch_p.add_argument("--two-stage", action="store_true",
+                       help="Detect bird boxes first and run pose on each crop (better for small birds)")
+    batch_p.add_argument("--detect-weights", type=str, default=None, help="Bird detector weights for --two-stage")
 
     detect_p = sub.add_parser("detect", help="Detect bird bounding boxes in an image")
     detect_p.add_argument("path", type=str, help="Path to image file")
@@ -113,6 +119,8 @@ def main(argv: list[str] | None = None) -> int:
         device=args.device,
         imgsz=args.imgsz,
         debug_dir=args.debug_dir,
+        two_stage=args.two_stage,
+        detect_weights=args.detect_weights or "",
     )
 
     if args.command == "score":
@@ -135,6 +143,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         out_path = Path(args.output)
         lines_out: list[str] = []
+        localizer = None  # built once on the first image so models are not reloaded per frame
         for line in manifest.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line:
@@ -146,7 +155,8 @@ def main(argv: list[str] | None = None) -> int:
             if not Path(img_path).is_file():
                 record = {"path": img_path, "error": "file_not_found"}
             else:
-                result = score_image(img_path, config=config)
+                localizer = localizer or config.make_localizer()
+                result = score_image(img_path, config=config, localizer=localizer)
                 record = {"path": img_path, **result.to_api_dict()}
             lines_out.append(json.dumps(record))
         out_path.write_text("\n".join(lines_out) + ("\n" if lines_out else ""), encoding="utf-8")
