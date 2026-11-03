@@ -96,8 +96,7 @@ per-judge agreement with the human (exact agreement plus Cohen's kappa), not jus
 - If the human labels in a web tool, put the review list *in the tool* rather than only in a CSV: show panel
   verdicts **only on items the human has already finished** (never before they label — that anchors them), read the
   panel's raw/jev files live so hints appear mid-run, fall back to a provisional judge majority until Jev lands, and
-  record "reviewed" separately from the labels. Reference: `PanelReview` in
-  the culling project's `research/refcull_labeler.py` and the ⚑/☆/✓ hints in `research/labeler/index.html`.
+  record "reviewed" separately from the labels.
 
 ## Agent pitfalls (learned)
 
