@@ -131,6 +131,8 @@ Not compared: the external mammal-eye model (no bird keypoints) and the base `yo
 | No-subject frames with a false eye | 0.14 | 0.33 |
 | Latency | 1× | about 2× |
 
+Re-run on `main` after #30 (two-stage box selection fix): every row is unchanged (0.487 → 0.667 within 5%, small birds 0.35 → 0.71, no-subject false eyes 0.14 → 0.33).
+
 The 2× is relative, from one harness that runs `predict()` and then `localize_eyes()` for both paths. The absolute per-image medians in the library table measure each adapter on its own: 215 ms for A_pipe, which runs inference twice inside `localize_eyes()`; 83 ms for B_td (one detector pass and one crop pose); 159 ms for P_crop.
 
 **Paired differences** (same 84 frames, within 5%, 2,000 resamples):
