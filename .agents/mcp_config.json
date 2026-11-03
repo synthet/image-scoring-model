@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "llmwiki-ro-core": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "D:/Projects/synthet-llm-wiki",
+        "python",
+        "D:/Projects/synthet-llm-wiki/scripts/run_llmwiki_mcp.py"
+      ]
+    }
+  }
+}
