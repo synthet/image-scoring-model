@@ -93,7 +93,12 @@ def _extract_from_subifd(data: bytes) -> bytes | None:
             e = ifd0 + 2 + i * 12
             tag = struct.unpack(f"{endian}H", data[e:e + 2])[0]
             if tag == 0x014A:  # SubIFDs
-                sub_offsets.append(struct.unpack(f"{endian}I", data[e + 8:e + 12])[0])
+                count = struct.unpack(f"{endian}I", data[e + 4:e + 8])[0]
+                value = struct.unpack(f"{endian}I", data[e + 8:e + 12])[0]
+                if count == 1:
+                    sub_offsets.append(value)
+                else:  # more than one SubIFD: the value points to an array of offsets (e.g. Nikon D90)
+                    sub_offsets.extend(struct.unpack(f"{endian}{count}I", data[value:value + 4 * count]))
 
         best: tuple[int, int] | None = None
         for so in sub_offsets:
@@ -125,8 +130,8 @@ def _extract_by_marker_scan(data: bytes) -> bytes | None:
     """Scan for SOI/EOI markers and return the largest embedded JPEG."""
     try:
         sois = [
-            i for i in range(512, len(data) - 1)
-            if data[i] == 0xFF and data[i + 1] == 0xD8
+            i for i in range(512, len(data) - 2)
+            if data[i] == 0xFF and data[i + 1] == 0xD8 and data[i + 2] == 0xFF  # SOI must be followed by a marker
         ]
         best: tuple[int, int] | None = None
         for s in sois:
