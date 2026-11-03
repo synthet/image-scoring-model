@@ -31,6 +31,7 @@ class PipelineConfig:
     model_version: str = "0.1.0"
     two_stage: bool = False  # bird detector box -> pose on the padded crop (better for small birds)
     detect_weights: str = ""
+    detect_conf: float | None = None  # two-stage detector box threshold; None keeps the pose bbox threshold
 
     def resolved_weights(self) -> str:
         return resolve_weights_path(self.weights or None)
@@ -46,6 +47,7 @@ class PipelineConfig:
             device=self.device,
             imgsz=self.imgsz,
             crop_detector=crop_detector,
+            crop_conf=self.detect_conf,
         )
 
 
