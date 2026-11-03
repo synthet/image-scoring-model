@@ -14,5 +14,5 @@ Dated snapshots. Numbers are measurements on our own data; thresholds are starti
 
 | Report | Summary |
 |--------|---------|
-| [eye-model-benchmark-2026-11-03.md](eye-model-benchmark-2026-11-03.md) | Our YOLO eye models vs an external top-down SimCC model on CUB and 147 owner-labelled library frames: label statistics, 16 findings, detector calibration, pros and cons, ranked improvements. Detector crop + `bird_pose_15_v0` raises library PCK@0.05 from 0.51 to 0.69 |
+| [eye-model-benchmark-2026-11-03.md](eye-model-benchmark-2026-11-03.md) | Our YOLO eye models, the pipeline crop path and an external top-down model on CUB and 147 owner-labelled library frames: label statistics, 17 findings, detector calibration, pros and cons, ranked improvements. The fleet path already reaches 0.67 PCK@0.05; detector false positives are the remaining gap |
 | [teacher-pseudo-labels-v0-2026-09-25.md](teacher-pseudo-labels-v0-2026-09-25.md) | Upstream RTMDet-tiny as a teacher: 877 pseudo-labelled images (503 bird boxes, 419 hard negatives) for `bird_detect_v0`, policy calibrated on the #377 owner labels |
