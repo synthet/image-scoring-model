@@ -18,13 +18,27 @@ Canonical tree: **`.cursor/`**. Mirrored to `.claude/` by `scripts/sync_assistan
 
 | Name | Canonical path | Description |
 |------|----------------|-------------|
+| `/analyze` | `.cursor/commands/analyze.md` | /analyze — Cross-artifact consistency and coverage check |
+| `/audit-instructions` | `.cursor/commands/audit-instructions.md` | /audit-instructions — Sort instruction files into three piles and prune the dated one |
+| `/check-subagents` | `.cursor/commands/check-subagents.md` | /check-subagents — Check external CLI sub-agents |
+| `/clarify` | `.cursor/commands/clarify.md` | /clarify — Resolve material ambiguities before planning |
 | `/compile-skill` | `.cursor/commands/compile-skill.md` | /compile-skill — Lower a stable skill into a deterministic harness |
 | `/decompose` | `.cursor/commands/decompose.md` | /decompose — Break a large task into parallelizable subtasks |
+| `/dream-memory` | `.cursor/commands/dream-memory.md` | /dream-memory — Propose consolidated project memory |
 | `/implement` | `.cursor/commands/implement.md` | /implement — Execute an approved plan |
+| `/log-session` | `.cursor/commands/log-session.md` | /log-session — Log agent session to raw memory |
+| `/memory-context` | `.cursor/commands/memory-context.md` | /memory-context — Print memory for a new session |
 | `/mine` | `.cursor/commands/mine.md` | /mine — Turn a source into repo agent assets |
 | `/plan` | `.cursor/commands/plan.md` | /plan — Implementation plan |
 | `/pr-ready` | `.cursor/commands/pr-ready.md` | /pr-ready — Prepare for pull request |
+| `/promote-memory` | `.cursor/commands/promote-memory.md` | /promote-memory — Approve dream into active memory |
+| `/release-notes` | `.cursor/commands/release-notes.md` | /release-notes — User-facing changelog slice |
+| `/run-codex-review` | `.cursor/commands/run-codex-review.md` | /run-codex-review — Run Codex review (MCP) |
+| `/run-gemini-review` | `.cursor/commands/run-gemini-review.md` | /run-gemini-review — Run Gemini review (MCP) |
+| `/run-subagent-review` | `.cursor/commands/run-subagent-review.md` | /run-subagent-review — Run external sub-agent review (MCP) |
 | `/spec` | `.cursor/commands/spec.md` | /spec — Feature or change specification |
+| `/task-claim` | `.cursor/commands/task-claim.md` | /task-claim — claim a backlog item |
+| `/tasks` | `.cursor/commands/tasks.md` | /tasks — Generate implementation tasks from a plan |
 | `/test-and-fix` | `.cursor/commands/test-and-fix.md` | /test-and-fix — Run tests and repair failures |
 | `/wiki-ingest` | `.cursor/commands/wiki-ingest.md` | /wiki-ingest — Process a source into the wiki |
 | `/wiki-lint` | `.cursor/commands/wiki-lint.md` | /wiki-lint — Health-check the docs wiki |
@@ -34,14 +48,74 @@ Canonical tree: **`.cursor/`**. Mirrored to `.claude/` by `scripts/sync_assistan
 
 | Name | Canonical path | Description |
 |------|----------------|-------------|
+| `agent-memory` | `.cursor/skills/agent-memory/SKILL.md` | Use when starting or ending an agent session, loading or improving repo memory, consolidating dream outputs, promoting reviewed memory, or when the user mentions agent memory, dream-memory, log-session, promote-memory, context, recall, durable learnings, or memory.md. |
+| `agent-setup` | `.cursor/skills/agent-setup/SKILL.md` | Use when inventorying, unifying, installing or synchronizing local Claude Code, Codex, Cursor or Antigravity skills and setup. |
+| `architecture-decisions` | `.cursor/skills/architecture-decisions/SKILL.md` | Use when documenting an architecture decision, comparing consequential alternatives, or creating an ADR; not for routine implementation notes. |
 | `autonomous-run-contract` | `.cursor/skills/autonomous-run-contract/SKILL.md` | >- |
+| `backlog-queue` | `.cursor/skills/backlog-queue/SKILL.md` | Use when picking, claiming, triaging, updating, closing, or filing backlog work across Local Markdown, GitHub Issues, or GitHub Projects. Always use when the user mentions backlog, queue, claim, status transition, issue intake, project board, or provider-oriented task flow. |
+| `cli-tools-overview` | `.cursor/skills/cli-tools-overview/SKILL.md` | Use as the router for agent CLI workflows: installing tools, choosing safe shell patterns, navigating/searching repos, Git/MCP operations, and task runners. Start here whenever the user asks which command-line tool or workflow to use, or when another CLI skill is not obviously more specific. |
+| `commit-and-push` | `.cursor/skills/commit-and-push/SKILL.md` | Use when the user asks to commit and push, publish, ship, or prepare a release commit. Guides staging only intended changes, writing a Conventional Commit, committing, and pushing to origin after verifying status and diff. |
+| `commit-conventions` | `.cursor/skills/commit-conventions/SKILL.md` | Use when drafting commit messages, PR titles, branch names, changelog entries, or release notes. Always apply for Conventional Commit wording, scoped commit subjects, breaking-change footers, or PR-ready messaging. |
+| `critical-commit-audit` | `.cursor/skills/critical-commit-audit/SKILL.md` | Use for a deep, high-severity bug audit of recent commits after /critical-commit-audit or when the user asks for post-commit critical review. Focus only on concrete correctness, security, data loss, crash, and major breakage triggers with minimal fixes and tests. |
+| `data-config-tools` | `.cursor/skills/data-config-tools/SKILL.md` | Use when inspecting, querying, validating, or editing JSON, YAML, TOML, CSV, HTTP responses, or local SQLite/config data. Prefer jq/yq/sqlite/curl over raw text search, especially for minified or structured data. |
+| `eval` | `.cursor/skills/eval/SKILL.md` | Use at the end of an implemented task, merged PR, or multi-iteration agent workflow to capture quality signals in project memory. Apply when the user mentions eval, feedback loop, task quality, regression learnings, or session scoring. |
+| `export-chat` | `.cursor/skills/export-chat/SKILL.md` | Use when the user types /export or /export-chat, or asks to export, save, dump, copy, or share the current chat, conversation, or agent transcript as a file or to the clipboard. Mimics Claude Code's /export for Cursor by rendering the Cursor agent transcript (user/assistant text plus full tool-call inputs) to Markdown. Also use to export an earlier Cursor chat by id. |
+| `framework-analyze` | `.cursor/skills/framework-analyze/SKILL.md` | Explicit framework workflow: analyze |
+| `framework-audit-instructions` | `.cursor/skills/framework-audit-instructions/SKILL.md` | Explicit framework workflow: audit-instructions |
+| `framework-check-subagents` | `.cursor/skills/framework-check-subagents/SKILL.md` | Explicit framework workflow: check-subagents |
+| `framework-clarify` | `.cursor/skills/framework-clarify/SKILL.md` | Explicit framework workflow: clarify |
+| `framework-compile-skill` | `.cursor/skills/framework-compile-skill/SKILL.md` | Explicit framework workflow: compile-skill |
+| `framework-decompose` | `.cursor/skills/framework-decompose/SKILL.md` | Explicit framework workflow: decompose |
+| `framework-dream-memory` | `.cursor/skills/framework-dream-memory/SKILL.md` | Explicit framework workflow: dream-memory |
+| `framework-implement` | `.cursor/skills/framework-implement/SKILL.md` | Explicit framework workflow: implement |
+| `framework-log-session` | `.cursor/skills/framework-log-session/SKILL.md` | Explicit framework workflow: log-session |
+| `framework-memory-context` | `.cursor/skills/framework-memory-context/SKILL.md` | Explicit framework workflow: memory-context |
+| `framework-mine` | `.cursor/skills/framework-mine/SKILL.md` | Explicit framework workflow: mine |
+| `framework-plan` | `.cursor/skills/framework-plan/SKILL.md` | Explicit framework workflow: plan |
+| `framework-pr-ready` | `.cursor/skills/framework-pr-ready/SKILL.md` | Explicit framework workflow: pr-ready |
+| `framework-promote-memory` | `.cursor/skills/framework-promote-memory/SKILL.md` | Explicit framework workflow: promote-memory |
+| `framework-release-notes` | `.cursor/skills/framework-release-notes/SKILL.md` | Explicit framework workflow: release-notes |
+| `framework-run-codex-review` | `.cursor/skills/framework-run-codex-review/SKILL.md` | Explicit framework workflow: run-codex-review |
+| `framework-run-gemini-review` | `.cursor/skills/framework-run-gemini-review/SKILL.md` | Explicit framework workflow: run-gemini-review |
+| `framework-run-subagent-review` | `.cursor/skills/framework-run-subagent-review/SKILL.md` | Explicit framework workflow: run-subagent-review |
+| `framework-spec` | `.cursor/skills/framework-spec/SKILL.md` | Explicit framework workflow: spec |
+| `framework-task-claim` | `.cursor/skills/framework-task-claim/SKILL.md` | Explicit framework workflow: task-claim |
+| `framework-tasks` | `.cursor/skills/framework-tasks/SKILL.md` | Explicit framework workflow: tasks |
+| `framework-test-and-fix` | `.cursor/skills/framework-test-and-fix/SKILL.md` | Explicit framework workflow: test-and-fix |
+| `framework-wiki-ingest` | `.cursor/skills/framework-wiki-ingest/SKILL.md` | Explicit framework workflow: wiki-ingest |
+| `framework-wiki-lint` | `.cursor/skills/framework-wiki-lint/SKILL.md` | Explicit framework workflow: wiki-lint |
+| `framework-wiki-query` | `.cursor/skills/framework-wiki-query/SKILL.md` | Explicit framework workflow: wiki-query |
+| `git-and-diff-workflows` | `.cursor/skills/git-and-diff-workflows/SKILL.md` | Use for safe Git and GitHub workflows: status, diffs, logs, branches, staging, commits, PR/issue inspection, and secret checks. Always apply before committing or when the user asks about git state, PRs, issues, or reviewing repository changes. |
+| `gradio-development` | `.cursor/skills/gradio-development/SKILL.md` | Use when extending a Gradio Blocks app, event graph, session state, background job UI, or interactive model demo. |
+| `graphify-knowledge-graph` | `.cursor/skills/graphify-knowledge-graph/SKILL.md` | Use when querying architecture, concept paths, god nodes, or communities via Graphify MCP or CLI; when the user mentions graphify, knowledge graph, GRAPH_REPORT, graphify-out, query_graph, or asks how two modules connect. Prefer this over broad rg/fff for structural “how does A relate to B” questions when the graph or MCP is available. Do not use for setup-tier comparisons (see mcp-code-intelligence) or ordinary text/filename search. |
+| `install-checklist` | `.cursor/skills/install-checklist/SKILL.md` | Use when provisioning a human workstation with agent CLI tools via winget, apt, or Homebrew. Apply when the user asks what to install on Windows, WSL2 Ubuntu, or macOS; do not use for automated dependency install loops inside a task. |
+| `jev-mcp` | `.cursor/skills/jev-mcp/SKILL.md` | Use when evaluating typed semantic judgments with TypeSafe Jev / System One — Choice, Score, or Noul questions against text or structured state; also when reranking candidates, verifying evidence support, routing/classifying text, or the user mentions jev-mcp, jev_choice, jev_score, jev_noul, or jev_system_one. |
+| `judge-panel` | `.cursor/skills/judge-panel/SKILL.md` | Run a blind panel of agentic CLI vision judges (Claude, Codex, Antigravity, Cursor) over rendered images, collect their votes, adjudicate with Jev (TypeSafe System One), and analyze agreement against human labels. Use when the user asks to "run CLI judges", "run a judge panel", "have the agents grade/label these images", "get LLM votes", "adjudicate with Jev", or to build consensus/final labels from human + model judgements (bbox grading, species ID, burst culling, any per-image or per-group visual judgement). |
 | `karpathy-guidelines` | `.cursor/skills/karpathy-guidelines/SKILL.md` | >- |
 | `lesson-to-skill` | `.cursor/skills/lesson-to-skill/SKILL.md` | >- |
+| `lint-format-security` | `.cursor/skills/lint-format-security/SKILL.md` | Use when running or choosing bounded linters, formatters, type checks, or security scanners such as ruff, prettier, eslint, clippy, rustfmt, shellcheck, trivy, hadolint, or gitleaks. Apply before merge when the user asks for lint, format, static analysis, or security checks. |
+| `llm-wiki` | `.cursor/skills/llm-wiki/SKILL.md` | Use when searching, asking, ingesting, compiling, reviewing, refreshing, validating, or answering from the shared local LLM Wiki (CLI `llmwiki` or MCP server `llmwiki-ro-core`). |
+| `mcp-code-intelligence` | `.cursor/skills/mcp-code-intelligence/SKILL.md` | Use when choosing or comparing code-intelligence/search backends such as text search, ast-grep, Serena, Zoekt, fff MCP, Graphify, embeddings, or IDE semantic search. Apply when repo search is repeated, cross-reference heavy, or plain rg is insufficient. |
+| `mcp-server-design` | `.cursor/skills/mcp-server-design/SKILL.md` | Use when designing, building, reviewing, or extending a Model Context Protocol server, including external API integrations, tools/resources/prompts, transports, input validation, auth, pagination, actionable errors, and safe dispatch surfaces. Always apply when the user mentions MCP server design, MCP builder, or agent integration tools. |
+| `release-bump` | `.cursor/skills/release-bump/SKILL.md` | Use when cutting a release, bumping project version, promoting the changelog Unreleased section, tagging release prep, or applying a semver rubric. Includes verification steps before committing release changes. |
+| `resume-task` | `.cursor/skills/resume-task/SKILL.md` | Resume a previous or ongoing piece of work from wherever it was left — in Claude Code, OpenAI Codex CLI, Cursor (IDE or cursor-agent), Google Antigravity (IDE or agy CLI) or an exported .md/.txt transcript (SpecStory, /export). Finds the in-flight thread across those tools, reconstructs its goal, what's done, where it stopped, files touched and what's left, checks that against the repo, and hands it back ready to continue with a resume command and a paste-ready continuation prompt. Use whenever the user types /resume-task or says "resume", "continue where I left off", "pick up the X work", "what was I doing in Codex/Cursor/Antigravity", "carry on with yesterday's task", "move this task to Claude Code", or comes back to unfinished work after a break — even if they don't say which tool it was in. |
+| `rust-testing` | `.cursor/skills/rust-testing/SKILL.md` | Use when writing or running Rust unit tests with cargo or nextest. Apply for crate-level tests that live beside modules, smoke tests for new crates, or when choosing cargo test vs cargo nextest. Do not use for GUI/TUI product-specific test frameworks. |
+| `safe-command-patterns` | `.cursor/skills/safe-command-patterns/SKILL.md` | Use before running shell commands that explore, edit, delete, move, generate, or inspect many files. Apply when constructing safe bounded commands, avoiding destructive operations, or replacing risky patterns with agent-safe alternatives. |
+| `search-and-navigation` | `.cursor/skills/search-and-navigation/SKILL.md` | Use for fast repo navigation and discovery with rg, fd/find, bat/sed, tree, eza, zoxide, or delta. Apply whenever locating files, finding text, mapping repo layout, or bounding command output for code exploration. |
+| `search-tool-selection` | `.cursor/skills/search-tool-selection/SKILL.md` | Use before any code-finding task to choose fd/find vs rg vs ast-grep vs semgrep vs fff MCP vs IDE search. Apply when deciding filename, text, syntax, symbol, config, or repeated repo-wide search strategy. |
+| `security-review` | `.cursor/skills/security-review/SKILL.md` | Use for a lightweight pre-merge security sanity check or whenever the user asks for security review. Covers secrets, risky patterns, dependency concerns, external input validation, and side-effecting agent/tool surfaces. |
 | `skill-authoring` | `.cursor/skills/skill-authoring/SKILL.md` | >- |
+| `structural-code-search` | `.cursor/skills/structural-code-search/SKILL.md` | Use when syntax-aware search is needed with ast-grep, semgrep, or ctags, especially after rg has too many false positives. Apply for refactors, API usage patterns, AST shapes, policy rules, or symbol indexes. |
+| `subagent-review` | `.cursor/skills/subagent-review/SKILL.md` | Runs swarm_search, swarm_run, or run_judge_panel via the synthet-agent-swarm MCP server. Use for a read-only external review, a judge panel, harness selection, or /swarm. |
 | `systematic-debugging` | `.cursor/skills/systematic-debugging/SKILL.md` | >- |
+| `task-env-package-tools` | `.cursor/skills/task-env-package-tools/SKILL.md` | Use for synthet-code-framework task runners, uv, Docker, sync checks, frontmatter validation, OKF lint, pytest, and project verification gates. Apply when running repo-specific tests/checks or diagnosing environment/package tooling. |
 | `test-driven-development` | `.cursor/skills/test-driven-development/SKILL.md` | >- |
+| `threat-modeling-agentic-tools` | `.cursor/skills/threat-modeling-agentic-tools/SKILL.md` | Use when threat-modeling agentic tooling, MCP/tools, hooks, prompts, remote control surfaces, review bundles, external exports, or secret exposure. Apply during security reviews or when adding features that let AI agents call tools or move data. |
 | `validate-implementation` | `.cursor/skills/validate-implementation/SKILL.md` | Verify an implementation against its spec's acceptance criteria, marking each AC Verified, Failed, or Unknown with concrete evidence. Use after /implement or /test-and-fix, before /pr-ready, or when the user asks whether the spec is actually satisfied. |
 | `verification-before-completion` | `.cursor/skills/verification-before-completion/SKILL.md` | >- |
+| `windows-agent-tooling` | `.cursor/skills/windows-agent-tooling/SKILL.md` | Use for native Windows agent workflows involving PowerShell, winget, Cursor IDE, Docker Desktop, path conventions, and decisions about when WSL is optional. Apply when the environment or user request is Windows-specific. |
+| `windows-keep-awake` | `.cursor/skills/windows-keep-awake/SKILL.md` | Use only when the user asks to keep a Windows session awake during a bounded job or prevent sleep temporarily. |
+| `wsl2-agent-tooling` | `.cursor/skills/wsl2-agent-tooling/SKILL.md` | Use for WSL2 Ubuntu agent workflows: repos under Linux filesystem, apt tooling, builds/tests, ast-grep, MCP servers, Docker/Windows interop, and CI-like commands. Apply when the environment or user request is WSL2-specific. |
 
 ## Rules
 
