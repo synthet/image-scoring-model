@@ -172,6 +172,30 @@ def test_calibrate_prefers_the_setting_that_removes_false_eyes():
     assert best["agree_min"] == 0.3 and best["negative_frames_with_false_eye"] == 0.0 and best["pck@0.05"] == 1.0
 
 
+def test_crop_agreement_maps_rtmdet_boxes_back_to_the_frame(monkeypatch):
+    import numpy as np
+    from PIL import Image
+
+    import training.teacher.pseudo_label_rtmdet as rt
+    from training.eval_eye_benchmark import TopDownYoloAdapter
+
+    calls = []
+
+    def fake_run_teacher(model, rgb, device):
+        calls.append(rgb.shape)
+        # crop-pixel boxes: one bird matching the detector box, one bird elsewhere, one non-bird on top
+        boxes = np.array([[10, 10, 50, 50], [60, 60, 70, 70], [10, 10, 50, 50]], dtype=float)
+        return boxes, np.array([0.7, 0.9, 0.95]), np.array([rt.BIRD, rt.BIRD, 0])
+
+    monkeypatch.setattr(rt, "run_teacher", fake_run_teacher)
+    adapter = TopDownYoloAdapter.__new__(TopDownYoloAdapter)
+    adapter.rtmdet, adapter.rtmdet_device = None, "cpu"
+    im = Image.new("RGB", (200, 100))
+    # detector box (110,30)-(150,70) inside crop (100,20)-(160,80): the matching RTMDet bird is at crop (10,10)-(50,50)
+    score = adapter._crop_agreement(im, [110, 30, 150, 70], (100, 20, 160, 80))
+    assert score == pytest.approx(0.7) and calls == [(60, 60, 3)]
+
+
 def test_parse_model_spec():
     s = parse_model_spec("A=yolo,weights=models/x.pt,eyes=1:2")
     assert s == {"name": "A", "type": "yolo", "weights": "models/x.pt", "eyes": "1:2"}

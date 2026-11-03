@@ -465,13 +465,28 @@ class TopDownYoloAdapter:
         self.pad = float(spec.get("pad", 0.25))
         self.imgsz = int(spec.get("imgsz", 640))
         self.rtmdet = None
-        if spec.get("agree") == "rtmdet":
+        self.agree_mode = spec.get("agree")
+        if self.agree_mode not in (None, "rtmdet", "rtmdet_crop"):
+            raise ValueError("agree must be rtmdet (tiled, whole frame) or rtmdet_crop (one pass per box crop)")
+        if self.agree_mode:
             import torch
 
             from training.teacher.rtmdet_tiny import load_upstream
 
             self.rtmdet_device = "cuda" if torch.cuda.is_available() else "cpu"
             self.rtmdet = load_upstream(spec.get("rtmdet_ckpt", "models/rtmdet_tiny_coco.pth")).to(self.rtmdet_device)
+
+    def _crop_agreement(self, im, box, crop) -> float:
+        """One untiled RTMDet pass on the padded box crop; best overlapping bird score in frame pixels."""
+        import numpy as np
+
+        from training.teacher.pseudo_label_rtmdet import BIRD, run_teacher
+
+        cx1, cy1, cx2, cy2 = crop
+        b, s, c = run_teacher(self.rtmdet, np.asarray(im.crop(crop)), self.rtmdet_device)
+        scores = [float(sc) for bb, sc, cl in zip(b, s, c)
+                  if int(cl) == BIRD and iou(box, [bb[0] + cx1, bb[1] + cy1, bb[2] + cx1, bb[3] + cy1]) >= 0.3]
+        return max(scores, default=0.0)
 
     def _agreement(self, im) -> list[tuple[list[float], float]]:
         """RTMDet (tiled) bird boxes with scores, in frame pixels."""
@@ -485,15 +500,17 @@ class TopDownYoloAdapter:
         dets = []
         if r.boxes is None:
             return {"detections": dets}
-        second = self._agreement(im) if self.rtmdet is not None else None
+        second = self._agreement(im) if self.agree_mode == "rtmdet" else None
         for box, conf in zip(r.boxes.xyxy.cpu().numpy(), r.boxes.conf.cpu().numpy()):
             x1, y1, x2, y2 = (float(v) for v in box)
-            agree = None
-            if second is not None:
-                agree = max((sc for b2, sc in second if iou([x1, y1, x2, y2], b2) >= 0.3), default=0.0)
             px, py = self.pad * (x2 - x1), self.pad * (y2 - y1)
             cx1, cy1 = max(0, round(x1 - px)), max(0, round(y1 - py))
             cx2, cy2 = min(im.width, round(x2 + px)), min(im.height, round(y2 + py))
+            agree = None
+            if second is not None:
+                agree = max((sc for b2, sc in second if iou([x1, y1, x2, y2], b2) >= 0.3), default=0.0)
+            elif self.agree_mode == "rtmdet_crop" and cx2 - cx1 >= 8 and cy2 - cy1 >= 8:
+                agree = self._crop_agreement(im, [x1, y1, x2, y2], (cx1, cy1, cx2, cy2))
             if cx2 - cx1 < 8 or cy2 - cy1 < 8:
                 continue
             p = self.pose.predict(im.crop((cx1, cy1, cx2, cy2)), conf=0.05, max_det=1, imgsz=self.imgsz,
