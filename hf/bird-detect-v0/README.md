@@ -1,5 +1,5 @@
 ---
-license: mit
+license: agpl-3.0
 tags:
   - ultralytics
   - yolo11
@@ -89,3 +89,14 @@ python -m eye_quality detect bird.jpg --weights models/bird_detect_v1.pt
 - The teacher excludes very small, silhouetted or occluded birds rather than labelling them, so those remain weak.
 - CUB labels are typically one bird per image; crowded frames need care.
 - CUB-200-2011 is a research dataset; check its terms for your use.
+
+## Licence
+
+These weights are licensed under [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html). They were trained with
+Ultralytics YOLO, which [treats trained models as AGPL-3.0 by default](https://www.ultralytics.com/license).
+
+Trained on CUB-200-2011, whose images come from Flickr and are described as limited to non-commercial
+research and education. The AGPL-3.0 licence covers these weights only and grants no rights in that dataset.
+Check its terms before commercial use.
+
+v1 also used boxes from the Apache-2.0 RTMDet-tiny detector on field photos, which are not distributed.

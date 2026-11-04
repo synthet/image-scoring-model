@@ -54,3 +54,12 @@ eye-quality batch manifest.jsonl --output results.jsonl
 python -m pytest -m "not gpu"
 python -m pytest -m gpu   # requires models/eye_pose_v0.pt + CUDA
 ```
+
+## Licence
+
+This project is licensed under [AGPL-3.0](LICENSE), because it depends on Ultralytics YOLO, which is AGPL-3.0.
+Ultralytics [treats trained models as AGPL-3.0 by default](https://www.ultralytics.com/license), so that also
+applies to the weights trained here.
+
+The AGPL-3.0 licence grants no rights in training data. CUB-200-2011 images come from Flickr and are described
+as limited to non-commercial research and education, so check those terms before commercial use.
