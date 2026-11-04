@@ -1,0 +1,39 @@
+{
+  "_comment": "Claude Code: copy to .mcp.json (gitignored) and adjust locally. Keep this template free of local paths and credentials; sibling paths use env overrides with relative defaults.",
+  "mcpServers": {
+    "llmwiki-ro-core": {
+      "_comment": "Shared evidence-bound LLM Wiki (read/search). Skill: .cursor/skills/llm-wiki/SKILL.md. SYNTHET_LLM_WIKI_DIR overrides the sibling checkout path.",
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "${SYNTHET_LLM_WIKI_DIR:-../synthet-llm-wiki}",
+        "python",
+        "${SYNTHET_LLM_WIKI_DIR:-../synthet-llm-wiki}/scripts/run_llmwiki_mcp.py"
+      ],
+      "type": "stdio"
+    },
+    "vexlum": {
+      "_comment": "Pipeline search/resolve/execute entry point (image-scoring-pipeline docs/technical/VEXLUM_MCP.md). Build first: cd image-scoring-pipeline/mcp-server && npm ci && npm run build.",
+      "side_effects": "write-capable",
+      "approval_required": true,
+      "approval_note": "execute can run pipeline actions; destructive ones also need VEXLUM_ALLOW_ELEVATED=1 on this entry.",
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${IMAGE_SCORING_PIPELINE_DIR:-../image-scoring-pipeline}/mcp-server/dist/vexlum.js"
+      ]
+    },
+    "driftara": {
+      "_comment": "Gallery search/resolve/execute entry point (image-scoring-gallery docs/technical/DRIFTARA_MCP.md). Build first: cd image-scoring-gallery/mcp-server && npm ci && npm run build.",
+      "side_effects": "write-capable",
+      "approval_required": true,
+      "approval_note": "execute can run gallery actions; write tiers need confirmation, and elevated ones also need DRIFTARA_ALLOW_ELEVATED=1 in the gallery app's environment.",
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${IMAGE_SCORING_GALLERY_DIR:-../image-scoring-gallery}/mcp-server/dist/driftara.js"
+      ]
+    }
+  }
+}

@@ -29,3 +29,6 @@ build/
 # Local agent instruction files; they carry project-prohibited wording (never commit)
 /CLAUDE.md
 /GEMINI.md
+
+# Local MCP config; the template is .mcp.json.example
+/.mcp.json
