@@ -5,6 +5,9 @@ Models are given as repeated ``--model`` specs, ``name=type,key=value,...``:
 
     yolo     YOLO pose weights; eyes=<left_idx>:<right_idx>        e.g. A=yolo,weights=models/eye_pose_v0.pt,eyes=1:2
     pipeline the production PoseLocalizer.localize_eyes() path        e.g. A_pipe=pipeline,weights=models/eye_pose_v0.pt
+    topdown  detector box -> YOLO pose on the padded crop; agree=rtmdet|rtmdet_crop adds a second-detector score
+    pipeline_crop  replay of the image-scoring-pipeline eye path (modules/keypoints.py); apply the consumer
+             floor with --thresholds (eye_conf 0.8)
     simcc    top-down SimCC bird-head ONNX (path required, no default); box=gt|yolo_bird
                                                                      e.g. C=simcc,onnx=<path>,box=yolo_bird
 
@@ -324,7 +327,7 @@ def parse_model_spec(spec: str) -> dict:
     for p in parts[1:]:
         k, _, v = p.partition("=")
         out[k.strip()] = v.strip()
-    if out["type"] not in ("yolo", "pipeline", "simcc", "topdown"):
+    if out["type"] not in ADAPTERS:
         raise ValueError(f"unknown model type in {spec!r}")
     if out["type"] == "simcc" and not out.get("onnx"):
         raise ValueError("simcc models need onnx=<path>")
@@ -465,13 +468,28 @@ class TopDownYoloAdapter:
         self.pad = float(spec.get("pad", 0.25))
         self.imgsz = int(spec.get("imgsz", 640))
         self.rtmdet = None
-        if spec.get("agree") == "rtmdet":
+        self.agree_mode = spec.get("agree")
+        if self.agree_mode not in (None, "rtmdet", "rtmdet_crop"):
+            raise ValueError("agree must be rtmdet (tiled, whole frame) or rtmdet_crop (one pass per box crop)")
+        if self.agree_mode:
             import torch
 
             from training.teacher.rtmdet_tiny import load_upstream
 
             self.rtmdet_device = "cuda" if torch.cuda.is_available() else "cpu"
             self.rtmdet = load_upstream(spec.get("rtmdet_ckpt", "models/rtmdet_tiny_coco.pth")).to(self.rtmdet_device)
+
+    def _crop_agreement(self, im, box, crop) -> float:
+        """One untiled RTMDet pass on the padded box crop; best overlapping bird score in frame pixels."""
+        import numpy as np
+
+        from training.teacher.pseudo_label_rtmdet import BIRD, run_teacher
+
+        cx1, cy1, cx2, cy2 = crop
+        b, s, c = run_teacher(self.rtmdet, np.asarray(im.crop(crop)), self.rtmdet_device)
+        scores = [float(sc) for bb, sc, cl in zip(b, s, c)
+                  if int(cl) == BIRD and iou(box, [bb[0] + cx1, bb[1] + cy1, bb[2] + cx1, bb[3] + cy1]) >= 0.3]
+        return max(scores, default=0.0)
 
     def _agreement(self, im) -> list[tuple[list[float], float]]:
         """RTMDet (tiled) bird boxes with scores, in frame pixels."""
@@ -485,15 +503,17 @@ class TopDownYoloAdapter:
         dets = []
         if r.boxes is None:
             return {"detections": dets}
-        second = self._agreement(im) if self.rtmdet is not None else None
+        second = self._agreement(im) if self.agree_mode == "rtmdet" else None
         for box, conf in zip(r.boxes.xyxy.cpu().numpy(), r.boxes.conf.cpu().numpy()):
             x1, y1, x2, y2 = (float(v) for v in box)
-            agree = None
-            if second is not None:
-                agree = max((sc for b2, sc in second if iou([x1, y1, x2, y2], b2) >= 0.3), default=0.0)
             px, py = self.pad * (x2 - x1), self.pad * (y2 - y1)
             cx1, cy1 = max(0, round(x1 - px)), max(0, round(y1 - py))
             cx2, cy2 = min(im.width, round(x2 + px)), min(im.height, round(y2 + py))
+            agree = None
+            if second is not None:
+                agree = max((sc for b2, sc in second if iou([x1, y1, x2, y2], b2) >= 0.3), default=0.0)
+            elif self.agree_mode == "rtmdet_crop" and cx2 - cx1 >= 8 and cy2 - cy1 >= 8:
+                agree = self._crop_agreement(im, [x1, y1, x2, y2], (cx1, cy1, cx2, cy2))
             if cx2 - cx1 < 8 or cy2 - cy1 < 8:
                 continue
             p = self.pose.predict(im.crop((cx1, cy1, cx2, cy2)), conf=0.05, max_det=1, imgsz=self.imgsz,
@@ -512,7 +532,79 @@ class TopDownYoloAdapter:
         return {"detections": sorted(dets, key=lambda d: -d["confidence"])}
 
 
-ADAPTERS = {"yolo": YoloAdapter, "pipeline": PipelineAdapter, "simcc": SimccAdapter, "topdown": TopDownYoloAdapter}
+# Replay of the image-scoring-pipeline eye path (modules/keypoints.py), kept dependency-free here: regions are
+# bird_detect_v1 boxes, each padded 25% (int/round clamping as in padded_crop_box), eye_pose_v0 runs on the
+# crop, and the pose detection overlapping the unpadded region best (IoU, then confidence) is kept.
+# Consumers then apply EYE_CONSUMER_MIN_CONF = 0.8; score with --thresholds to apply that floor.
+
+def pipeline_padded_crop_box(region_px, width: int, height: int, pad: float):
+    x1, y1, x2, y2 = region_px
+    bw, bh = x2 - x1, y2 - y1
+    cx1, cy1 = max(0, int(x1 - pad * bw)), max(0, int(y1 - pad * bh))
+    cx2, cy2 = min(width, int(round(x2 + pad * bw))), min(height, int(round(y2 + pad * bh)))
+    if cx2 - cx1 < 2 or cy2 - cy1 < 2:
+        return None
+    return cx1, cy1, cx2, cy2
+
+
+def pipeline_select_detection(detections: list[dict], target_xyxy) -> dict | None:
+    """Highest IoU with the unpadded region, then confidence; non-overlapping detections never win."""
+    best, best_key = None, None
+    for det in detections:
+        overlap = iou(det["xyxy"], target_xyxy)
+        if overlap <= 0.0:
+            continue
+        key = (round(overlap, 6), float(det["conf"]))
+        if best_key is None or key > best_key:
+            best, best_key = det, key
+    return best
+
+
+class PipelineCropAdapter:
+    """The eye path the fleet stores: pipeline regions -> padded crop -> eye_pose_v0 -> IoU-selected detection."""
+
+    def __init__(self, spec: dict, device):
+        from ultralytics import YOLO
+
+        self.det = YOLO(spec.get("det_weights", "models/bird_detect_v1.pt"))
+        self.pose = YOLO(spec.get("weights", "models/eye_pose_v0.pt"))
+        self.device = device
+        left, right = (int(v) for v in spec.get("eyes", "1:2").split(":"))
+        self.eyes = {"left": left, "right": right}
+        self.pad = float(spec.get("pad", 0.25))
+        self.det_conf = float(spec.get("det_conf", 0.25))
+        self.pose_conf = float(spec.get("pose_conf", 0.25))
+
+    def __call__(self, im, rgb, frame) -> dict:
+        r = self.det.predict(im, conf=self.det_conf, max_det=10, imgsz=640, verbose=False, device=self.device)[0]
+        out = []
+        if r.boxes is None:
+            return {"detections": out}
+        for box, conf in zip(r.boxes.xyxy.cpu().numpy(), r.boxes.conf.cpu().numpy()):
+            region = [float(v) for v in box]
+            crop = pipeline_padded_crop_box(region, im.width, im.height, self.pad)
+            if crop is None:
+                continue
+            cx1, cy1 = crop[0], crop[1]
+            target = (region[0] - cx1, region[1] - cy1, region[2] - cx1, region[3] - cy1)
+            p = self.pose.predict(im.crop(crop), conf=self.pose_conf, imgsz=640, verbose=False, device=self.device)[0]
+            cands = []
+            if p.boxes is not None and p.keypoints is not None:
+                kd = p.keypoints.data.cpu().numpy()
+                for i, b in enumerate(p.boxes.xyxy.cpu().numpy()):
+                    cands.append({"xyxy": [float(v) for v in b], "conf": float(p.boxes.conf[i]), "kpts": kd[i]})
+            chosen = pipeline_select_detection(cands, target)
+            eyes = []
+            if chosen is not None:
+                eyes = [{"x": cx1 + float(chosen["kpts"][k][0]), "y": cy1 + float(chosen["kpts"][k][1]),
+                         "confidence": min(1.0, max(0.0, float(chosen["kpts"][k][2]))), "side": side}
+                        for side, k in self.eyes.items()]
+            out.append({"bbox": region, "confidence": float(conf), "eyes": eyes})
+        return {"detections": sorted(out, key=lambda d: -d["confidence"])}
+
+
+ADAPTERS = {"yolo": YoloAdapter, "pipeline": PipelineAdapter, "simcc": SimccAdapter, "topdown": TopDownYoloAdapter,
+            "pipeline_crop": PipelineCropAdapter}
 
 
 def run_models(frames: list[dict], specs: list[dict], out: Path, device) -> dict[str, dict]:

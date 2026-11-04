@@ -172,6 +172,95 @@ def test_calibrate_prefers_the_setting_that_removes_false_eyes():
     assert best["agree_min"] == 0.3 and best["negative_frames_with_false_eye"] == 0.0 and best["pck@0.05"] == 1.0
 
 
+def test_crop_agreement_maps_rtmdet_boxes_back_to_the_frame(monkeypatch):
+    import numpy as np
+    from PIL import Image
+
+    import training.teacher.pseudo_label_rtmdet as rt
+    from training.eval_eye_benchmark import TopDownYoloAdapter
+
+    calls = []
+
+    def fake_run_teacher(model, rgb, device):
+        calls.append(rgb.shape)
+        # crop-pixel boxes: one bird matching the detector box, one bird elsewhere, one non-bird on top
+        boxes = np.array([[10, 10, 50, 50], [60, 60, 70, 70], [10, 10, 50, 50]], dtype=float)
+        return boxes, np.array([0.7, 0.9, 0.95]), np.array([rt.BIRD, rt.BIRD, 0])
+
+    monkeypatch.setattr(rt, "run_teacher", fake_run_teacher)
+    adapter = TopDownYoloAdapter.__new__(TopDownYoloAdapter)
+    adapter.rtmdet, adapter.rtmdet_device = None, "cpu"
+    im = Image.new("RGB", (200, 100))
+    # detector box (110,30)-(150,70) inside crop (100,20)-(160,80): the matching RTMDet bird is at crop (10,10)-(50,50)
+    score = adapter._crop_agreement(im, [110, 30, 150, 70], (100, 20, 160, 80))
+    assert score == pytest.approx(0.7) and calls == [(60, 60, 3)]
+
+
+def test_pipeline_crop_helpers_match_the_pipeline_rules():
+    from training.eval_eye_benchmark import pipeline_padded_crop_box, pipeline_select_detection
+
+    # int() floors the top-left, round() (half to even, as in the pipeline) the bottom-right, both clamped
+    assert pipeline_padded_crop_box([10.5, 10.5, 50.5, 50.5], 100, 100, 0.25) == (0, 0, 60, 60)
+    assert pipeline_padded_crop_box([80, 80, 99, 99], 100, 100, 0.25) == (75, 75, 100, 100)
+    assert pipeline_padded_crop_box([99.9, 99.9, 100, 100], 100, 100, 0.25) is None  # under 2 px once clamped
+    target = (10, 10, 50, 50)
+    near = {"xyxy": [12, 12, 50, 50], "conf": 0.5}
+    neighbour = {"xyxy": [60, 60, 90, 90], "conf": 0.99}  # brought in by the padding, no overlap
+    looser = {"xyxy": [0, 0, 60, 60], "conf": 0.9}
+    assert pipeline_select_detection([neighbour, looser, near], target) is near
+    assert pipeline_select_detection([neighbour], target) is None
+
+
+def test_pipeline_crop_adapter_maps_the_selected_detection(monkeypatch):
+    import numpy as np
+    from PIL import Image
+
+    from training.eval_eye_benchmark import PipelineCropAdapter
+
+    class T:
+        def __init__(self, a):
+            self.a = np.asarray(a, dtype=float)
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.a
+
+        def __getitem__(self, i):
+            return float(self.a[i])
+
+    class Boxes:
+        def __init__(self, xyxy, conf):
+            self.xyxy, self.conf = T(xyxy), T(conf)
+
+    class R:
+        def __init__(self, boxes, kpts=None):
+            self.boxes = boxes
+            self.keypoints = None if kpts is None else type("K", (), {"data": T(kpts)})()
+
+    class FakeYOLO:
+        def __init__(self, result):
+            self.result = result
+
+        def predict(self, *a, **k):
+            return [self.result]
+
+    kp_near = np.zeros((6, 3))
+    kp_near[1], kp_near[2] = [20, 15, 0.9], [30, 15, 0.4]
+    kp_far = np.zeros((6, 3))
+    kp_far[1] = [5, 5, 0.99]
+    adapter = PipelineCropAdapter.__new__(PipelineCropAdapter)
+    adapter.device, adapter.pad, adapter.det_conf, adapter.pose_conf = None, 0.25, 0.25, 0.25
+    adapter.eyes = {"left": 1, "right": 2}
+    adapter.det = FakeYOLO(R(Boxes([[40, 20, 80, 60]], [0.8])))  # region in frame pixels
+    # crop = (30, 10, 90, 70); target in crop = (10, 10, 50, 50); the far detection does not overlap it
+    adapter.pose = FakeYOLO(R(Boxes([[52, 52, 58, 58], [10, 10, 50, 50]], [0.99, 0.6]), [kp_far, kp_near]))
+    out = adapter(Image.new("RGB", (200, 100)), None, {})
+    eyes = out["detections"][0]["eyes"]
+    assert [(e["x"], e["y"], e["confidence"]) for e in eyes] == [(50.0, 25.0, 0.9), (60.0, 25.0, 0.4)]
+
+
 def test_parse_model_spec():
     s = parse_model_spec("A=yolo,weights=models/x.pt,eyes=1:2")
     assert s == {"name": "A", "type": "yolo", "weights": "models/x.pt", "eyes": "1:2"}
