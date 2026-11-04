@@ -13,7 +13,7 @@ status: complete
 
 We compared our eye localizers, and the crop-path eyes that the scoring pipeline stores for the fleet, with an **external top-down bird-eye model** that runs on a crop of a bird box. The comparison covered CUB held-out species and a library sample of 147 frames that the owner click-labelled. The work was done on 2026-11-02 local time; the file name carries the UTC date.
 
-The external model is a private teacher. Its identity, lineage and local paths are recorded only under gitignored `docs/private/` ([PRIVATE_LOCAL.md](../PRIVATE_LOCAL.md)). Training on its outputs needs the owner's recorded permission.
+The external model is a private teacher. Its identity, lineage and local paths are recorded only under gitignored `docs/private/` ([PRIVATE_LOCAL.md](../PRIVATE_LOCAL.md)). The owner granted training use on 2026-11-03 (recorded in the private manifest); the training gates in the T-series pilot audit still apply.
 
 ## Summary
 
@@ -176,7 +176,7 @@ The 2× is relative, from one harness that runs `predict()` and then `localize_e
 13. **Older-body RAW decoding:** the shared preview extractor (`training/build_eye_dataset.py`) failed on 33 of 423 sampled NEFs (23 D90, 7 Z6ii, 1 D300), and on 43 more in the calibration draw. Root cause: with more than one SubIFD the tag value is an offset array, which was read as a single offset, and the fallback marker scan then accepted a false JPEG start. All 73 failing files decode after the fix (separate PR). Older bodies are under-sampled in both samples.
 14. **The external model's auxiliary outputs (eye state, orientation) were not evaluated:** no test-sample eye was tagged closed, and the calibration sample has only 2.
 15. **Requiring a second detector to agree removes bird-free false eyes.** It costs recall and speed and needs an eye-threshold rule that also penalises hidden sides; see the calibration section.
-16. **`verified_negatives_v1` has at least one error:** one of the 26 calibration frames drawn from it contains a bird.
+16. **Labels need a visual check before they are trusted.** The calibration labels were meant to be birds only, but 2 of 70 labelled subjects are not birds: a cat (`n0016`) and a person (`b0107`). An earlier version of this report read `n0016` as an error in `verified_negatives_v1`; it was not, and the manifest is correct for that frame. Calibration numbers here exclude both subjects.
 17. **The fleet path is close to the best setup.** At the 0.8 consumer floor, P_crop matches B_td on false eyes (0.02 hidden, 0.19 no-subject) and is 0.03 behind on placement (not significant). Lowering the floor to the provider's 0.25 gate raises within 5% to 0.72, but hidden-side false eyes go 0.02 → 0.09 and no-subject false eyes 0.19 → 0.33. Re-fitting the floor belongs on the calibration sample and in the pipeline repository.
 
 ## Detector calibration (follow-up, same day)
@@ -184,11 +184,10 @@ The 2× is relative, from one harness that runs `predict()` and then `localize_e
 **Calibration set (`data/field_eye_calib_v1`):**
 - 108 frames that the detectors flagged as containing a bird, plus 26 verified no-bird frames.
 - Seed `field-eye-calib-v1`, drawn with `--exclude-manifest`, so it shares no folder and no file with the test sample.
-- The owner labelled **birds only**:
-  - 70 birds, 9 of them with hand-drawn boxes;
-  - eye slots: 60 visible, 62 hidden, 18 unresolvable; 2 tagged closed;
-  - only 55 of the 108 detector-flagged frames contain a bird;
-  - one frame from `verified_negatives_v1` does contain a bird, so that manifest has at least one error.
+- The owner labelled birds, and a visual check of all 70 labelled subjects found 68 birds and 2 others, which are excluded (`subjects.jsonl`, `--birds-only`). That leaves 132 frames: 54 with birds and 78 with none.
+  - 68 birds;
+  - eye slots: 56 visible, 62 hidden, 18 unresolvable; 2 tagged closed;
+  - only 54 of the 108 detector-flagged frames contain a bird.
 
 **Method:** `eval_eye_benchmark run --calibrate`.
 - **Inputs:** two-stage predictions from `topdown` with `agree=rtmdet`. Each `bird_detect_v1` box carries the best tiled-RTMDet bird score among overlapping boxes (IoU ≥ 0.3).
@@ -199,8 +198,8 @@ The 2× is relative, from one harness that runs `predict()` and then `localize_e
 
 | Calibration set, B_td | Within 5% | Birds found | No-bird frames with a false eye |
 |---|---|---|---|
-| Current default (conf 0.25, no agreement) | 0.68 | 0.77 | 0.71 |
-| Calibrated (conf 0.60, agreement ≥ 0.50) | 0.67 | 0.64 | 0.06 |
+| Current default (conf 0.25, no agreement) | 0.73 | 0.76 | 0.71 |
+| Calibrated (conf 0.60, agreement ≥ 0.50) | 0.71 | 0.66 | 0.06 |
 
 **Frozen settings scored once on the test sample** (birds only):
 
@@ -214,7 +213,7 @@ The 2× is relative, from one harness that runs `predict()` and then `localize_e
 - **Detection cost:** about 12 points of bird recall.
 - **Hidden-side cost:** the calibrated eye threshold is near zero (0.037; 0.057 for A_td), because the objective did not penalise false eyes on hidden sides. On the test set those rose from 0.02 to 0.19. The objective was not changed after seeing the test numbers. The next calibration should add a hidden-side term, decided in advance and re-run on fresh calibration data.
 - **Speed cost:** tiled RTMDet makes two-stage about 10× slower (about 0.8 s per 2048 px image on the RTX 4060). A cheaper second check, such as a single untiled RTMDet pass on the box crop, should be tested before production use.
-- **Cheaper check, measured on the calibration set only:** one untiled RTMDet pass per padded box crop (`agree=rtmdet_crop`) reaches the same best objective (0.603), with recall 0.66 vs 0.64, at a median 346 ms vs 635 ms per image. That is still about 4× the two-stage cost without a second detector.
+- **Cheaper check, measured on the calibration set only:** one untiled RTMDet pass per padded box crop (`agree=rtmdet_crop`) reaches the same best objective (0.650), with recall 0.68 vs 0.66, at a median 346 ms vs 635 ms per image. That is still about 4× the two-stage cost without a second detector.
 - **Not yet in production:** the agreement rule exists only in the benchmark (`topdown,agree=rtmdet|rtmdet_crop`, `--agree-min`). `PoseLocalizer --two-stage` and the pipeline's crop path still use `bird_detect_v1` alone at confidence 0.25.
 
 ## Consumer floor sweep (calibration set only)
@@ -225,18 +224,18 @@ Follows #28. This uses the `pipeline_crop` predictions on the 134-frame calibrat
 
 | Setting (`eye_pose_v0`, two-stage) | Objective | Within 5% | False eyes on hidden | No-bird frames with a false eye | Frames with an eye found |
 |---|---|---|---|---|---|
-| Fleet today: floor 0.8 | −0.03 | 0.60 | 0.06 | 0.56 | 0.86 |
-| Floor 0.97 | 0.19 | 0.57 | 0.06 | 0.31 | 0.81 |
-| Floor 0.995 | 0.22 | 0.43 | 0.03 | 0.18 | 0.63 |
-| **Floor 0.8 + agreement** (detector conf ≥ 0.60, tiled RTMDet agreement ≥ 0.50) | **0.44** | 0.52 | 0.06 | **0.01** | 0.74 |
+| Fleet today: floor 0.8 | 0.00 | 0.63 | 0.06 | 0.56 | 0.88 |
+| Floor 0.97 | 0.22 | 0.59 | 0.06 | 0.31 | 0.83 |
+| Floor 0.995 | 0.24 | 0.45 | 0.03 | 0.18 | 0.63 |
+| **Floor 0.8 + agreement** (detector conf ≥ 0.60, tiled RTMDet agreement ≥ 0.50) | **0.48** | 0.55 | 0.06 | **0.01** | 0.78 |
 
 **What the sweep shows:**
 - **The floor is the wrong tool for detector false positives.** The pipeline's false boxes often hold real animals, so eye confidence on them stays high. Raising the floor keeps paying in real eyes, and the objective never settles: bootstrap picks split between 0.985 and 0.995. No change to the 0.8 floor is recommended on this evidence.
 - **Detector agreement is the right tool.** With the 0.8 floor kept, it removes nearly all false eyes on no-bird frames and leaves hidden-side false eyes at 0.06. That also resolves the hidden-side cost in the calibration section, which came from a near-zero eye threshold, not from the agreement rule.
-- **Cost:** about 8 points of eyes within 5% and 12 of frames with an eye found, from birds the agreement rule drops.
-- **Check:** two-stage `eye_pose_v0` with no agreement at floor 0.8 nearly reproduces the fleet path (0.60, 0.06, 0.58).
+- **Cost:** about 7 points of eyes within 5% and 10 of frames with an eye found, from birds the agreement rule drops.
+- **Check:** two-stage `eye_pose_v0` with no agreement at floor 0.8 reproduces the fleet path to within 0.01 (0.63, 0.06, 0.58).
 
-This is calibration-set evidence with 60 visible eyes, and the combination was chosen after seeing the earlier test-set result, so confirm it on fresh labels before changing the fleet.
+This is calibration-set evidence with 56 visible eyes, and the combination was chosen after seeing the earlier test-set result, so confirm it on fresh labels before changing the fleet.
 
 ## Pros and cons
 
@@ -262,10 +261,10 @@ This is calibration-set evidence with 60 visible eyes, and the combination was c
 |---|---|---|---|
 | 1 | Two-stage localization in this repo's `localize_eyes()` (the fleet path already is two-stage) | Library within 5%: 0.49 → 0.67; small birds 0.35 → 0.71 | Opt-in in PR #24; off by default; box selection fixed in #30 |
 | 2 | Calibrate the detector before two-stage becomes the default; test an RTMDet-agreement rule | Single-detector `bird_detect_v1` boxes were 89% false; no-subject false eyes 0.14 → 0.33 with two-stage | Calibrated: conf ≥ 0.60 + RTMDet agreement ≥ 0.50 takes bird-free false eyes to 0 on the test set. Keeping the 0.8 floor with agreement avoids the hidden-side cost on the calibration set (see the floor sweep). Open: confirmation on fresh labels, 4–10× latency, production wiring |
-| 3 | Make `bird_pose_15_v0` the eye model (here and in the fleet crop path) | Best placement on both datasets; over the fleet path only +0.03 (paired CI −0.04 to 0.09) | Owner decision; needs a mapping from its parts (6 and 10) into the 6-point schema |
+| 3 | Make `bird_pose_15_v0` the eye model (here and in the fleet crop path) | Best placement on both datasets; over the fleet path only +0.03 (paired CI −0.04 to 0.09) | Not now: keep `eye_pose_v0` until a significant gain over the fleet path is shown; it would also need a mapping from its parts (6 and 10) into the 6-point schema |
 | 4 | Fine-tune on library-domain heads: owls, frontal heads, low light | Failure frames in the private report | Needs a separately labelled set; the 147-frame sample stays a test set |
 | 5 | Learned visibility and eye state instead of thresholds | Library visible-vs-hidden AUROC 0.58–0.81 | Design work |
-| 6 | Distillation from the external model, mainly for small-bird recall and visibility labels | Its strengths are small birds and frontal heads, not precision | Gated on the owner's recorded permission |
+| 6 | Distillation from the external model, mainly for small-bird recall and visibility labels | Its strengths are small birds and frontal heads, not precision | Permission granted 2026-11-03; on hold under the T-series audit gates (human eye labels with left/right identity, partial-label trainer, frozen evaluation) |
 | 7 | Fix decoding of older NEF previews | 76 sampled NEFs undecodable (33 test draw, 43 calibration draw) | Fixed in a separate PR; all 73 retested files decode |
 
 ## Limitations
