@@ -21,8 +21,9 @@ The external model is a private teacher. Its identity, lineage and local paths a
 2. **Small birds:** our full-frame pose models miss most small birds in the library. The external model's lead came from running on a crop of a detector box, and that box came from our own `bird_detect_v1`.
 3. **Two-stage localization** (detector box → pose on the crop) is the measured win **over this repo's full-frame `localize_eyes()`**. With `bird_pose_15_v0`, library eyes within 5% of the bird-box diagonal go from 0.51 to 0.69, and for small birds from 0.32 to 0.68, with no change on CUB. It is available as an opt-in in PR #24.
 4. **The fleet's eyes already come from a two-stage path.** The scoring pipeline's crop path (`modules/keypoints.py`: `bird_detect_v1` region, 25% padding, `eye_pose_v0`, IoU match, consumer floor 0.8) scores 0.67 within 5%. The two-stage `bird_pose_15_v0` is only +0.03 over it (paired 95% CI −0.04 to +0.09). For the fleet, the measured gap is detector false positives, not localization.
-5. **Detector false positives** are the main cost. `bird_detect_v1` alone mistakes many other animals for birds; agreement with RTMDet is a strong filter.
-6. **CUB numbers overstate library performance** by a wide margin: 0.96–0.98 versus 0.44–0.51 within 5% for the current full-frame models.
+5. **Detector false positives are the fleet's measured gap, and a light second-detector check fixes most of them.** Requiring any RTMDet bird overlap (agreement ≥ 0.10) cut no-bird false eyes on all three labelled sets with no measured loss of eyes or birds; see the confirmation section. `bird_detect_v1` alone mistakes many other animals for birds.
+6. **Detector false positives** are the main cost of two-stage. `bird_detect_v1` alone mistakes many other animals for birds; agreement with RTMDet is a strong filter.
+7. **CUB numbers overstate library performance** by a wide margin: 0.96–0.98 versus 0.44–0.51 within 5% for the current full-frame models.
 
 ## Models compared
 
@@ -237,6 +238,40 @@ Follows #28. This uses the `pipeline_crop` predictions on the 134-frame calibrat
 
 This is calibration-set evidence with 56 visible eyes, and the combination was chosen after seeing the earlier test-set result, so confirm it on fresh labels before changing the fleet.
 
+## Confirmation on fresh labels
+
+**Confirmation set (`data/field_eye_confirm_v1`):**
+- 70 detector-flagged frames plus 30 verified no-bird frames, sharing no folder or file with the two earlier samples. The target was 120 flagged frames; the unused folders ran out at one frame per folder.
+- The owner labelled birds only. A visual check of all 50 labelled subjects found 43 birds and 7 others (lizard, turtles, dragonfly, frog, toy), which are excluded.
+- Bird-only scoring uses 96 frames: 33 with birds (33 visible eyes, 31 hidden slots) and 63 with none. Only one visible eye is in the large-bird band.
+
+**Pre-set test, scored once:** the fleet path at floor 0.8 against `eye_pose_v0` two-stage at floor 0.8 with the calibrated strict rule (detector confidence ≥ 0.60, tiled RTMDet agreement ≥ 0.50). Paired 95% intervals over frames.
+
+| | Fleet, floor 0.8 | Strict rule | Difference [95% CI] |
+|---|---|---|---|
+| No-bird frames with a false eye | 0.43 | 0.02 | −0.41 [−0.54, −0.28] |
+| False eyes on hidden sides | 0.16 | 0.06 | −0.10 [−0.20, 0.00] |
+| Eyes within 5% | 0.58 | 0.48 | −0.09 [−0.22, 0.04] |
+| Frames with an eye found | 0.83 | 0.67 | −0.17 [−0.33, −0.04] |
+| Birds found | 0.72 | 0.44 | −0.28 [−0.42, −0.16] |
+
+The strict rule's benefit is confirmed, but it drops far more birds than the calibration set suggested. **It should not ship.**
+
+**Exploratory follow-up.** Separating the two thresholds on this set showed the cost comes from their strictness, not from requiring agreement. A **light rule**, detector confidence ≥ 0.25 (the current setting) plus RTMDet agreement ≥ 0.10, kept every bird. This rule was suggested by the confirmation set, so that row is not independent; the calibration and test sets played no part in suggesting it.
+
+| Set (light rule vs fleet at floor 0.8) | No-bird frames with a false eye | Difference [95% CI] | Eyes within 5% | Birds found |
+|---|---|---|---|---|
+| Calibration (78 no-bird frames, 56 eyes) | 0.56 → 0.22 | −0.35 [−0.46, −0.24] | 0.63 → 0.63 | 0.76 → 0.76 |
+| Test (21, 78 eyes) | 0.19 → 0.05 | −0.14 [−0.32, 0.00] | 0.67 → 0.67 | 0.76 → 0.76 |
+| Confirmation (63, 33 eyes; suggested the rule) | 0.43 → 0.08 | −0.35 [−0.47, −0.24] | 0.58 → 0.61 | 0.72 → 0.72 |
+
+**Recommendation:** the light rule is the fleet candidate: fewer false eyes with no measured loss of eyes or birds on any set. The small confirmation-set gain in eyes probably reflects a minor difference between the two adapters, not a real improvement.
+
+**Still open:**
+- **Latency:** the tiled RTMDet check took a median 421 ms per image against 69 ms here, about 6×. A per-crop check is about half the tiled cost, but it has not been measured at the light setting.
+- **False eyes that remain:** 0.05–0.22 of no-bird frames still get one.
+- **Implementation:** the rule exists only in the benchmark; the change itself belongs in the pipeline repository.
+
 ## Pros and cons
 
 **`bird_pose_15_v0`:**
@@ -260,7 +295,7 @@ This is calibration-set evidence with 56 visible eyes, and the combination was c
 | # | Change | Evidence | Status |
 |---|---|---|---|
 | 1 | Two-stage localization in this repo's `localize_eyes()` (the fleet path already is two-stage) | Library within 5%: 0.49 → 0.67; small birds 0.35 → 0.71 | Opt-in in PR #24; off by default; box selection fixed in #30 |
-| 2 | Calibrate the detector before two-stage becomes the default; test an RTMDet-agreement rule | Single-detector `bird_detect_v1` boxes were 89% false; no-subject false eyes 0.14 → 0.33 with two-stage | Calibrated: conf ≥ 0.60 + RTMDet agreement ≥ 0.50 takes bird-free false eyes to 0 on the test set. Keeping the 0.8 floor with agreement avoids the hidden-side cost on the calibration set (see the floor sweep). Open: confirmation on fresh labels, 4–10× latency, production wiring |
+| 2 | Calibrate the detector before two-stage becomes the default; test an RTMDet-agreement rule | Single-detector `bird_detect_v1` boxes were 89% false; no-subject false eyes 0.14 → 0.33 with two-stage | The strict rule (conf ≥ 0.60, agreement ≥ 0.50) was confirmed but drops too many birds. The light rule (conf ≥ 0.25, agreement ≥ 0.10) cuts false eyes on all three sets with no measured loss. Open: latency, pipeline implementation |
 | 3 | Make `bird_pose_15_v0` the eye model (here and in the fleet crop path) | Best placement on both datasets; over the fleet path only +0.03 (paired CI −0.04 to 0.09) | Not now: keep `eye_pose_v0` until a significant gain over the fleet path is shown; it would also need a mapping from its parts (6 and 10) into the 6-point schema |
 | 4 | Fine-tune on library-domain heads: owls, frontal heads, low light | Failure frames in the private report | Needs a separately labelled set; the 147-frame sample stays a test set |
 | 5 | Learned visibility and eye state instead of thresholds | Library visible-vs-hidden AUROC 0.58–0.81 | Design work |
