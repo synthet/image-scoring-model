@@ -1,5 +1,5 @@
 ---
-license: mit
+license: agpl-3.0
 tags:
   - ultralytics
   - yolo11
@@ -71,3 +71,12 @@ Model files: [synthet/eye-pose-v0 on Hugging Face](https://huggingface.co/synthe
 - Single-class bird detection with head keypoints; not a general animal pose model.
 - Trained on CUB-200 studio-style bird photos; performance on distant field wildlife may vary.
 - Eye *localization* only — focus/sharpness scoring uses separate heuristics in the parent repo.
+
+## Licence
+
+These weights are licensed under [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html). They were trained with
+Ultralytics YOLO, which [treats trained models as AGPL-3.0 by default](https://www.ultralytics.com/license).
+
+Trained on CUB-200-2011, whose images come from Flickr and are described as limited to non-commercial
+research and education. The AGPL-3.0 licence covers these weights only and grants no rights in that dataset.
+Check its terms before commercial use.
