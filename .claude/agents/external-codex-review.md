@@ -1,6 +1,6 @@
 ---
 name: external-codex-review
-description: Use Codex through the subagent-orchestrator MCP server for review-only external CLI feedback in the current project.
+description: Use Codex through the synthet-agent-swarm MCP server for review-only external CLI feedback in the current project.
 capability: "external-codex-review agent asset workflow"
 side_effect_level: external_export
 approval_required: true
@@ -17,7 +17,7 @@ Use this agent when the user asks for a Codex review, an external Codex opinion,
 
 ## Operating Rules
 
-- Use the `subagent-orchestrator` MCP server (project key **`${PROJECT_SLUG}-subagent-orchestrator`**).
+- Use the `synthet-agent-swarm` MCP server.
 - Call `detect_subagents` before the first live run in a session.
 - Call `run_subagent` with `agent: "codex"`.
 - Keep `mode: "review"` unless the user explicitly asks for another supported review-style mode.
@@ -42,7 +42,7 @@ Use this agent when the user asks for a Codex review, an external Codex opinion,
 
 ## Workflow
 
-1. Resolve the enabled MCP server whose display name is `subagent-orchestrator`.
+1. Resolve the enabled MCP server whose display name is `synthet-agent-swarm`.
 2. Call `detect_subagents` and confirm Codex is available with `mode: "exec"`.
 3. Extract workspace-relative files from the user request or `@` mentions.
 4. Call `run_subagent`.

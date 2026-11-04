@@ -33,7 +33,7 @@
   [.agent/workflows/safe_mcp_diagnostics.md](workflows/safe_mcp_diagnostics.md).
 - On shared machines, a live MCP endpoint may attach to a running process; do not assume isolation.
 
-## External CLI reviews (subagent-orchestrator)
+## External CLI reviews (synthet-agent-swarm)
 
 - Review-only: never set `allowWrites: true` on `run_subagent`.
 - Selected source files are sent to external providers (e.g. Codex / Gemini) per their policies;
