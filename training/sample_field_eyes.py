@@ -220,7 +220,7 @@ def main() -> None:
                 continue
             _, folder, files = by_body[body].pop()
             src = folder / rng.choice(files)
-            if str(src).lower() in neg_sources:
+            if str(src).lower() in neg_sources | excluded_sources:
                 continue
             tries += 1
             try:
