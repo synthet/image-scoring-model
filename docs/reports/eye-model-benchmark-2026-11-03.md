@@ -267,9 +267,18 @@ The strict rule's benefit is confirmed, but it drops far more birds than the cal
 
 **Recommendation:** the light rule is the fleet candidate: fewer false eyes with no measured loss of eyes or birds on any set. The small confirmation-set gain in eyes probably reflects a minor difference between the two adapters, not a real improvement.
 
+**Cheaper check at the light setting.** The tiled RTMDet check took a median 421 ms per image against 69 ms for the fleet path, about 6×. One untiled RTMDet pass per box crop (`agree=rtmdet_crop`) was measured with the setting fixed in advance (detector ≥ 0.25, agreement ≥ 0.10, floor 0.8), on all three sets. It costs about 2× the fleet path (median about 200 ms against 105 ms, in the same runs):
+
+| No-bird frames with a false eye | Fleet | Tiled check | Per-crop check | Per-crop − fleet [95% CI] |
+|---|---|---|---|---|
+| Calibration | 0.56 | 0.22 | 0.26 | −0.31 [−0.43, −0.20] |
+| Test | 0.19 | 0.05 | 0.10 | −0.10 [−0.30, 0.09] |
+| Confirmation | 0.43 | 0.08 | 0.14 | −0.29 [−0.40, −0.17] |
+
+Eyes within 5% did not fall on any set. Birds found were unchanged on calibration and test; on confirmation one bird was lost (0.72 → 0.70). The per-crop check removes slightly fewer false eyes than the tiled one at about a third of the cost, so it is the practical choice. On the test set alone the improvement is not significant, with only 21 no-bird frames.
+
 **Still open:**
-- **Latency:** the tiled RTMDet check took a median 421 ms per image against 69 ms here, about 6×. A per-crop check is about half the tiled cost, but it has not been measured at the light setting.
-- **False eyes that remain:** 0.05–0.22 of no-bird frames still get one.
+- **False eyes that remain:** 0.05–0.26 of no-bird frames still get one, depending on the set and the check used.
 - **Implementation:** the rule exists only in the benchmark; the change itself belongs in the pipeline repository.
 
 ## Pros and cons
