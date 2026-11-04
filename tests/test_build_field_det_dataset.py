@@ -1,9 +1,10 @@
 """Fast tests for the detector dataset builder: box conversion, date rule, non-bird and dropped frames."""
 import json
+import random
 
 import pytest
 
-from training.build_field_det_dataset import check_held_out, field_rows, held_dates, shooting_date, yolo_line
+from training.build_field_det_dataset import _cub_replay, check_held_out, field_rows, held_dates, shooting_date, yolo_line
 
 
 def test_shooting_date_uses_the_folder_not_the_file_name():
@@ -53,3 +54,15 @@ def test_build_stops_on_a_held_out_or_undated_frame(tmp_path):
         check_held_out(["D:/P/Z6/2021-05-05/other_lens.NEF"], dates)
     with pytest.raises(SystemExit):
         check_held_out(["D:/P/Z6/undated.NEF"], dates)
+
+
+def test_cub_replay_skips_cache_files_and_keeps_only_box_columns(tmp_path):
+    cub = tmp_path / "cub"
+    (cub / "images" / "val").mkdir(parents=True)
+    (cub / "labels" / "val").mkdir(parents=True)
+    (cub / "images" / "val" / "a.jpg").write_bytes(b"x")
+    (cub / "images" / "val" / "a.npy").write_bytes(b"x")
+    (cub / "labels" / "val" / "a.txt").write_text("0 0.5 0.5 0.2 0.2 0.1 0.1 2\n", encoding="utf-8")
+    listed = _cub_replay(cub, "val", 10, tmp_path / "out", random.Random(0))
+    assert [p.rsplit("/", 1)[-1] for p in listed] == ["a.jpg"]
+    assert (tmp_path / "out" / "labels" / "cub_val" / "a.txt").read_text(encoding="utf-8") == "0 0.5 0.5 0.2 0.2\n"

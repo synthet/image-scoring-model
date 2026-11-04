@@ -24,6 +24,7 @@ import shutil
 from pathlib import Path
 
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+IMAGE_EXTS = {".jpg", ".jpeg", ".png"}  # training leaves .npy cache files beside the images
 
 
 def shooting_date(path: str) -> str | None:
@@ -89,7 +90,7 @@ def _write_label(path: Path, lines: list[str]) -> None:
 
 def _cub_replay(cub: Path, split: str, count: int, out: Path, rng: random.Random) -> list[str]:
     """Link a seeded CUB sample and keep only the box columns of its pose labels."""
-    images = sorted((cub / "images" / split).iterdir())
+    images = sorted(p for p in (cub / "images" / split).iterdir() if p.suffix.lower() in IMAGE_EXTS)
     listed = []
     for image in rng.sample(images, min(count, len(images))):
         rows = (cub / "labels" / split / f"{image.stem}.txt").read_text(encoding="utf-8").splitlines()
