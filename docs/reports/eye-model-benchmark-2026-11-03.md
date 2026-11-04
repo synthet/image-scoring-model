@@ -281,6 +281,26 @@ Eyes within 5% did not fall on any set. Birds found were unchanged on calibratio
 - **False eyes that remain:** 0.05–0.26 of no-bird frames still get one, depending on the set and the check used.
 - **Implementation:** the rule exists only in the benchmark; the change itself belongs in the pipeline repository.
 
+## Detector fine-tune on field negatives (rejected, 2026-11-04)
+
+We tested whether fine-tuning `bird_detect_v1` on owner-labelled field frames could remove false eyes without a second detector. **It was rejected, and `bird_detect_v1` stays.** False eyes fell, but too many birds were lost.
+
+**Run:** one run, `bird_field_d1`, 30 epochs from `bird_detect_v1`, with the keep-or-reject rules fixed before training. It trained on 134 field frames (48 bird boxes, 96 no-bird frames) and 2,000 CUB replay frames. No training frame shares a shooting date with the test, confirmation or promotion holdout sets. We scored `last.pt`, because `best.pt` is chosen on CUB validation, which contains no field frames.
+
+Fleet path at floor 0.8, candidate against `bird_detect_v1`, paired 95% intervals over frames:
+
+| Metric | Test | Confirmation | Rule | Result |
+|---|---|---|---|---|
+| No-bird frames with a false eye | 0.19 → 0.05, −0.14 [−0.36, 0.06] | 0.43 → 0.13, −0.30 [−0.42, −0.19] | Confirmation falls by at least 0.10; test not worse | Pass |
+| Birds found | 0.76 → 0.65, −0.11 [−0.20, −0.03] | 0.72 → 0.47, −0.26 [−0.38, −0.14] | Falls by no more than 0.03 on either set | **Fail** |
+| Eyes within 5% | 0.67 → 0.59, −0.08 [−0.16, −0.01] | 0.58 → 0.46, −0.12 [−0.27, 0.00] | Falls by no more than 0.03 on either set | **Fail** |
+
+The promotion holdout is scored only after a pass, so it was not scored and stays unused. The candidate checkpoint is kept locally for reference and must not be promoted.
+
+**Likely cause, not tested:** the model learned to say "no bird" more often, the same trade the strict agreement rule made. It saw only 48 field bird boxes against 96 no-bird frames, and the 803 earlier field frames were not on disk to replay.
+
+**What this means:** the light agreement rule remains the fleet candidate. On these two sets it reached 0.05 and 0.08 false eyes (tiled) or 0.10 and 0.14 (per-crop), and the only bird lost was one on confirmation with the per-crop check, though it needs a second detector at runtime. Do not repeat this run on the same data. Another attempt would need more field bird boxes or the 803 frames rebuilt, plus fresh evaluation labels, because the test and confirmation sets have now been scored several times.
+
 ## Pros and cons
 
 **`bird_pose_15_v0`:**
