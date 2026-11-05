@@ -314,6 +314,7 @@ Eyes within 5% did not fall on any set. Birds found were unchanged on calibratio
 ## Limitations
 
 - **Small sample:** 78 visible bird eyes, so intervals are about ±0.12 on library PCK@0.05.
+- **Sets are separated by folder and file, not by day:** library folders are split by lens, so two folders can come from one session. 22 of the 100 confirmation frames share a shooting date with the test set and 19 with the calibration set, and 31 of the 147 test frames share one with the calibration set. "Fresh labels" means newly labelled frames, not fully independent sessions.
 - **Sampling favours detectable birds:** frames were drawn where a detector found something. Birds both detectors miss everywhere in a frame are not represented, so library recall is optimistic for detector-based setups. The 13 hand-drawn bird boxes partly offset this.
 - **Bird / non-bird tags** come from a visual triage, not from owner labels.
 - **No CUB subset is unseen by both of our models**, and the external model's training data is unknown.
