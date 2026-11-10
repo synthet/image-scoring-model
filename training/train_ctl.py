@@ -22,7 +22,7 @@ STATE_FILE = REPO_ROOT / "runs" / ".train_state.json"
 
 DEFAULT_PYTHON = os.environ.get(
     "EYE_QUALITY_PYTHON",
-    r"C:\Users\dmnsy\AppData\Local\Microsoft\WindowsApps\python.exe"
+    os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WindowsApps", "python.exe")
     if sys.platform == "win32"
     else sys.executable,
 )

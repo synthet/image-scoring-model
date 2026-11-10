@@ -23,7 +23,7 @@ Connection defaults match docker-compose.yml (host-mapped Postgres):
 Override via --pg-* flags or POSTGRES_* env vars.
 
 Run with the Store Python 3.11 that has torch/ultralytics/eye_quality:
-  & "C:\\Users\\dmnsy\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe" \\
+  & "$env:LOCALAPPDATA\\Microsoft\\WindowsApps\\python.exe" \\
       training/build_eye_dataset.py --limit 500 --max-per-species 40
 """
 
