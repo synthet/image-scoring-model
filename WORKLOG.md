@@ -13,7 +13,7 @@ Decision (user): finish the fine-tune to epoch 100 (auto-promotes), then validat
 
 ### Environment note
 ML deps (torch 2.7.1+cu118 CUDA, ultralytics 8.4.67, editable `eye_quality`) live only in the
-**Microsoft Store Python 3.11**: `C:\Users\dmnsy\AppData\Local\Microsoft\WindowsApps\python.exe`.
+**Microsoft Store Python 3.11**: `%LOCALAPPDATA%\Microsoft\WindowsApps\python.exe`.
 The shell's default `python` is the agent venv and has no torch.
 
 ### Step 1 — Finish fine-tune to epoch 100 (auto-promote) ✅

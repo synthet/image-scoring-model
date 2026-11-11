@@ -32,3 +32,18 @@ build/
 
 # Local MCP config; the template is .mcp.json.example
 /.mcp.json
+
+# Machine-local agent config (examples: .cursor/mcp.example.json, .mcp.json.example)
+/.cursor/mcp.json
+/.agents/mcp_config.json
+
+# Session exports and local logs (hold machine paths and transcripts)
+/20??-??-??-*.txt
+/20??-??-??-*.md
+codex-session-*.md
+/logs/
+/.agent/scratch/*
+/.agent/workspaces/
+/.agent-memory/raw-sessions/*
+/.agent-memory/worklogs/
+/docs/_local/
